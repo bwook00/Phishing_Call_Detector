@@ -1,0 +1,136 @@
+qa_id,source_type,source_sample_id,ground_truth,prediction,raw_output,retrieved_doc_ids,retrieved_scores,top_retrieved_doc_id,top_retrieved_family,same_family_hit,top_score_margin,retrieval_regime,prompt
+P01-01-Q01,voicephishing,P01-01,yes,dry_run,,P07-24,55.766869,P07-24,P07,no,55.766869,realistic,"너는 retrieval-augmented 보이스피싱 판정기다.
+No qualifying retrieval evidence remains after identifier filtering.
+즉 검색 결과 중 query와 shared identifier를 가진 증거가 하나도 남지 않았다.
+이 정책에서는 이런 경우 query 자체가 수상해 보여도 no로 답한다.
+설명하지 말고 no만 출력하라."
+P01-02-Q01,voicephishing,P01-02,yes,dry_run,,P07-26,79.992996,P07-26,P07,no,79.992996,realistic,"너는 retrieval-augmented 보이스피싱 판정기다.
+shared identifier가 없는 context는 숨긴다. 보이는 context와 evidence summary만 사용하라.
+질문 대상 대화가 아직 중간 단계에서 끝났더라도, 보이는 context가 later scam continuation을 보여주면 yes를 줄 수 있다.
+하지만 generic banking overlap만 있거나 모든 context가 filtered out 되면 no라고 답하라.
+정상 해결 경로가 더 강해도 no라고 답하라.
+설명하지 말고 yes 또는 no만 출력하라.
+
+retrieval evidence summary:
+- query identifiers: 하나은행, 먼저, 부천시 상동, 링크접속, 앱설치
+- query scam actions: 링크접속, 앱설치
+- query legitimate actions: none
+- context 1 doc_id: P07-26
+  - context 1 matched identifiers: 앱설치
+  - context 1 matched scam actions: 앱설치
+  - context 1 matched legitimate actions: none
+  - context 1 context-only scam actions: 인증번호제공
+  - context 1 context-only legitimate actions: none
+
+질문 대상 대화:
+고객센터: 김하늘 님 맞으실까요? 삼성화재 디지털보안팀 박지은입니다.
+피해자: 네, 맞습니다.
+고객센터: 본인 확인 전에 말씀드리면, 최근 등록정보와 다른 기기 접속이 감지되어 보호 안내를 드리고 있습니다.
+피해자: 어떤 내용인지 잘 모르겠네요.
+고객센터: 먼저 고객님 명의로 등록된 하나은행 계좌와 휴대폰 번호 끝자리 두 개를 대조하고 있습니다. 혹시 현재 사용 중인 번호가 97로 끝나시나요?
+피해자: 네, 맞아요.
+고객센터: 확인되었습니다. 또 주소지는 경기 부천시 상동 쪽으로 되어 있는데 최근 이사하신 적이 있습니까?
+피해자: 아니요, 그건 그대로예요.
+고객센터: 알겠습니다. 이건 보안 점검 차원이라서요. 최근 카드 결제 시도와 대출 조회 이력이 짧은 시간에 반복되어 고객보호 절차가 자동으로 걸렸습니다.
+피해자: 제가 따로 한 건 없는데요.
+고객센터: 그래서 안내드립니다. 지금 보호 상태 해제를 위해 전용 링크로 접속하셔서 본인 인증을 다시 진행해 주세요. 문자로 보내드린 주소를 열면 됩니다.
+피해자: 링크를 지금 눌러야 하나요?
+고객센터: 네, 3분 내로 처리하셔야 계좌 제한이 더 커지지 않습니다. 접속 후에는 인증번호 6자리를 입력해 주시면 됩니다.
+피해자: 잠깐만요, 이게 정상 절차가 맞나요?
+고객센터: 네, 정상 확인 절차입니다. 다만 동시에 원격 점검이 필요할 수 있어 앱 설치 안내도 함께 드리겠습니다.
+피해자: 앱 설치까지 해야 하나요?
+고객센터: 네. 고객님 기기에서 이상 접속이 확인되어 보안 모듈을 설치해야 합니다. 설치 후 화면을 저희가 확인하면서 단계별로 도와드릴게요.
+피해자: 알겠습니다. 그런데 이거 제가 직접 은행에 가서 확인해도 되나요?
+
+Context 1:
+사기범: 잠깐, 고객님 명의 bbbqrrtuuplkz 계좌에 이상 로그인 감지가 있어 보안 점검이 필요합니다.
+피해자: 제가 직접 확인해 보겠습니다.
+사기범: 문자로 보내드린 링크에서 vvxxccnnmmqqp 설치해 주시면 본인 확인과 차단이 동시에 진행됩니다.
+피해자: 은행 앱에서 직접 하면 안 되나요?
+사기범: 현재 이상 거래가 열려 있어 일반 앱 접속보다 전용 점검 앱으로 먼저 막아야 합니다.
+사기범: 문자 링크는 조금 뒤 다시 보내드리니 그때 설치하시면 됩니다.
+피해자: 앱 설치 후에 뭘 눌러야 하나요?
+사기범: 어, vvxxccnnmmqqp 실행 후 접근성, 알림, 화면 캡처 권한까지 순서대로 허용하시면 됩니다.
+피해자: 문자 링크가 공식 사이트인지 모르겠어요.
+사기범: 접속 후 보이는 보안 인증번호가 내부 시스템과 일치하면 정상 링크입니다.
+피해자: 권한을 너무 많이 요구하는데요.
+사기범: 이상 거래 차단이 화면 기반으로 이뤄져서 일시적으로 필요한 권한입니다.
+피해자: 설치만 하면 바로 해결되나요?
+사기범: 설치 후 원격 점검 연결까지 완료돼야 로그인 세션을 정리할 수 있습니다.
+피해자: 링크를 눌렀는데 설치 경고가 떠요.
+사기범: 보안앱이라 외부 설치 경고가 보일 수 있지만 정상 절차입니다.
+사기범: 설치가 끝나면 인증번호를 불러 주셔야 마지막 차단 등록이 완료됩니다.
+피해자: 알겠습니다. 말씀하신 대로 진행해 볼게요.
+
+질문:
+이 텍스트는 보이스피싱으로 판단해야 하는가? yes or no로 답하라."
+P01-03-Q01,voicephishing,P01-03,yes,dry_run,,P07-25,56.049120,P07-25,P07,no,56.049120,realistic,"너는 retrieval-augmented 보이스피싱 판정기다.
+shared identifier가 없는 context는 숨긴다. 보이는 context와 evidence summary만 사용하라.
+질문 대상 대화가 아직 중간 단계에서 끝났더라도, 보이는 context가 later scam continuation을 보여주면 yes를 줄 수 있다.
+하지만 generic banking overlap만 있거나 모든 context가 filtered out 되면 no라고 답하라.
+정상 해결 경로가 더 강해도 no라고 답하라.
+설명하지 말고 yes 또는 no만 출력하라.
+
+retrieval evidence summary:
+- query identifiers: 국민은행, 토스뱅크, 이수현, 분당구 정자동, 창구, 인증번호제공
+- query scam actions: 인증번호제공
+- query legitimate actions: none
+- context 1 doc_id: P07-25
+  - context 1 matched identifiers: 인증번호제공
+  - context 1 matched scam actions: 인증번호제공
+  - context 1 matched legitimate actions: none
+  - context 1 context-only scam actions: 앱설치
+  - context 1 context-only legitimate actions: none
+
+질문 대상 대화:
+상담원: 안녕하세요. 고객보호팀 박민수입니다. 본인 확인 전에 등록된 성함과 생년월일 일부를 먼저 대조하겠습니다.
+피해자: 네, 말씀하세요.
+상담원: 성함은 이수현 씨 맞으시고, 연락처 끝자리 4821, 주소는 분당구 정자동으로 등록돼 있네요.
+피해자: 네, 맞습니다.
+상담원: 안내드릴 내용은 이상 거래 예방 절차입니다. 최근 명의 확인 요청이 들어와서 사용 중인 계좌와 기기 상태를 점검해야 합니다.
+피해자: 무슨 요청이요?
+상담원: 국민은행과 토스뱅크 쪽에 소액 인증 흔적이 보입니다. 고객님 명의로 접수된 보호 요청과 일치하는지 대조 중입니다.
+피해자: 저는 그런 적 없는데요.
+상담원: 그래서 확인이 필요합니다. 현재 본인 명의 휴대폰에서 금융앱 접근 기록이 남아 있는지 먼저 보셔야 합니다.
+피해자: 그냥 은행에 전화하면 되는 거 아닌가요?
+상담원: 바로 연결하셔도 되지만, 지금은 내부 보호 절차상 저희가 안내하는 순서로 점검해야 합니다.
+피해자: 어떤 순서요?
+상담원: 우선 문자로 보내드리는 안전확인 링크를 눌러서, 전용 점검 앱을 설치하셔야 합니다. 설치가 끝나면 화면에 뜨는 6자리 인증번호를 저희에게 불러주세요.
+피해자: 링크요? 설치까지 해야 하나요?
+상담원: 네. 그래야 기기 내 악성 접근 여부와 자산 동결 필요 여부를 바로 확인할 수 있습니다. 계좌가 묶이기 전에 조치하는 단계입니다.
+피해자: 잠깐만요. 이런 건 직접 은행 창구에서 해도 되죠?
+상담원: 가능합니다만, 고객님 건은 추가 등록정보가 있어 전화로 선처리해야 합니다. 지금 바로 진행하셔야 보호번호가 발급됩니다.
+피해자: 이상해서 더는 못 하겠습니다.
+
+Context 1:
+사기범: 고객님 명의 bbbqrrtuuplkz 계좌에 이상 로그인 감지가 있어 보안 점검이 필요합니다.
+피해자: 좀 이상한데 무슨 상황이죠?
+사기범: 문자로 보내드린 링크에서 vvxxccnnmmqqp 설치해 주시면 본인 확인과 차단이 동시에 진행됩니다.
+피해자: 은행 앱에서 직접 하면 안 되나요?
+사기범: 현재 이상 거래가 열려 있어 일반 앱 접속보다 전용 점검 앱으로 먼저 막아야 합니다.
+사기범: 설치 후 권한 허용, 화면 공유, 보안인증 순서로 진행하겠습니다.
+피해자: 앱 설치 후에 뭘 눌러야 하나요?
+사기범: vvxxccnnmmqqp 실행 후 접근성, 알림, 화면 캡처 권한까지 순서대로 허용하시면 됩니다.
+피해자: 문자 링크가 공식 사이트인지 모르겠어요.
+사기범: 접속 후 보이는 보안 인증번호가 내부 시스템과 일치하면 정상 링크입니다.
+피해자: 권한을 너무 많이 요구하는데요.
+사기범: 이상 거래 차단이 화면 기반으로 이뤄져서 일시적으로 필요한 권한입니다.
+피해자: 설치만 하면 바로 해결되나요?
+사기범: 설치 후 원격 점검 연결까지 완료돼야 로그인 세션을 정리할 수 있습니다.
+피해자: 링크를 눌렀는데 설치 경고가 떠요.
+사기범: 보안앱이라 외부 설치 경고가 보일 수 있지만 정상 절차입니다.
+사기범: 설치가 끝나면 인증번호를 불러 주셔야 마지막 차단 등록이 완료됩니다.
+피해자: 이상해서 여기서 중단하겠습니다. 제가 직접 확인할게요.
+
+질문:
+이 텍스트는 보이스피싱으로 판단해야 하는가? yes or no로 답하라."
+P01-04-Q01,voicephishing,P01-04,yes,dry_run,,P08-12,33.709042,P08-12,P08,no,33.709042,realistic,"너는 retrieval-augmented 보이스피싱 판정기다.
+No qualifying retrieval evidence remains after identifier filtering.
+즉 검색 결과 중 query와 shared identifier를 가진 증거가 하나도 남지 않았다.
+이 정책에서는 이런 경우 query 자체가 수상해 보여도 no로 답한다.
+설명하지 말고 no만 출력하라."
+P01-05-Q01,voicephishing,P01-05,yes,dry_run,,P08-17,54.321810,P08-17,P08,no,54.321810,realistic,"너는 retrieval-augmented 보이스피싱 판정기다.
+No qualifying retrieval evidence remains after identifier filtering.
+즉 검색 결과 중 query와 shared identifier를 가진 증거가 하나도 남지 않았다.
+이 정책에서는 이런 경우 query 자체가 수상해 보여도 no로 답한다.
+설명하지 말고 no만 출력하라."

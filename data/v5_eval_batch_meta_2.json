@@ -1,0 +1,39 @@
+{"id": "batch_69e41681d0c4819093c33aee6923a133",
+  "object": "batch",
+  "endpoint": "/v1/responses",
+  "model": null,
+  "errors": null,
+  "input_file_id": "file-Xf3DG7XyFgMKKFShhA2FMT",
+  "completion_window": "24h",
+  "status": "validating",
+  "output_file_id": null,
+  "error_file_id": null,
+  "created_at": 1776555649,
+  "in_progress_at": null,
+  "expires_at": 1776642049,
+  "finalizing_at": null,
+  "completed_at": null,
+  "failed_at": null,
+  "expired_at": null,
+  "cancelling_at": null,
+  "cancelled_at": null,
+  "request_counts": {
+    "total": 0,
+    "completed": 0,
+    "failed": 0
+  },
+  "usage": {
+    "input_tokens": 0,
+    "output_tokens": 0,
+    "total_tokens": 0,
+    "input_tokens_details": {
+      "cached_tokens": 0
+    },
+    "output_tokens_details": {
+      "reasoning_tokens": 0
+    }
+  },
+  "metadata": {
+    "job": "reinforced_v5_masked_gpt4omini_realistic"
+  }
+}

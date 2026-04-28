@@ -1,0 +1,533 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>보이스피싱 Binary Benchmark 결과 설명서</title>
+  <style>
+    :root {
+      --bg: #f4f6fb;
+      --paper: #ffffff;
+      --ink: #162033;
+      --muted: #5d6b82;
+      --line: #d9e0ec;
+      --accent: #3459e6;
+      --accent-soft: #edf2ff;
+      --good: #0b7a4b;
+      --warn: #a36100;
+      --bad: #b42318;
+      --mono-bg: #0f172a;
+      --mono-ink: #e5edf8;
+      --shadow: 0 18px 40px rgba(15, 23, 42, 0.08);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      background: linear-gradient(180deg, #eef3ff 0%, var(--bg) 160px);
+      color: var(--ink);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Apple SD Gothic Neo", "Noto Sans KR", sans-serif;
+      line-height: 1.7;
+    }
+
+    .page {
+      width: min(1120px, calc(100vw - 32px));
+      margin: 28px auto 56px;
+    }
+
+    .hero,
+    .card {
+      background: var(--paper);
+      border: 1px solid rgba(217, 224, 236, 0.9);
+      border-radius: 22px;
+      box-shadow: var(--shadow);
+    }
+
+    .hero {
+      padding: 34px 38px 30px;
+      margin-bottom: 18px;
+    }
+
+    .eyebrow {
+      display: inline-block;
+      padding: 6px 10px;
+      border-radius: 999px;
+      background: var(--accent-soft);
+      color: var(--accent);
+      font-weight: 700;
+      font-size: 13px;
+      letter-spacing: 0.02em;
+      margin-bottom: 16px;
+    }
+
+    h1 {
+      margin: 0 0 12px;
+      font-size: clamp(30px, 4vw, 42px);
+      line-height: 1.18;
+    }
+
+    .hero p {
+      margin: 0;
+      font-size: 17px;
+      color: var(--muted);
+      max-width: 900px;
+    }
+
+    .summary-grid,
+    .metric-grid {
+      display: grid;
+      gap: 16px;
+      margin-top: 24px;
+    }
+
+    .summary-grid {
+      grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+    }
+
+    .metric-grid {
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    }
+
+    .summary-box,
+    .metric-box {
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      padding: 18px 20px;
+      background: #fbfcff;
+    }
+
+    .summary-box h2,
+    .metric-box h2 {
+      margin: 0 0 8px;
+      font-size: 14px;
+      color: var(--muted);
+      font-weight: 700;
+      letter-spacing: 0.02em;
+      text-transform: uppercase;
+    }
+
+    .summary-box .value,
+    .metric-box .value {
+      font-size: 30px;
+      font-weight: 800;
+      line-height: 1.1;
+      margin-bottom: 6px;
+    }
+
+    .metric-box.good .value { color: var(--good); }
+    .metric-box.warn .value { color: var(--warn); }
+    .metric-box.bad .value { color: var(--bad); }
+
+    .layout {
+      display: grid;
+      grid-template-columns: 1.1fr 0.9fr;
+      gap: 18px;
+      align-items: start;
+    }
+
+    .card {
+      padding: 28px 30px;
+      margin-bottom: 18px;
+    }
+
+    h2.section-title {
+      margin: 0 0 14px;
+      font-size: 24px;
+      line-height: 1.25;
+    }
+
+    h3 {
+      margin: 22px 0 10px;
+      font-size: 18px;
+      line-height: 1.3;
+    }
+
+    p {
+      margin: 0 0 12px;
+    }
+
+    ul,
+    ol {
+      margin: 0 0 14px 20px;
+      padding: 0;
+    }
+
+    li + li {
+      margin-top: 7px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 14px 0 6px;
+      font-size: 15px;
+    }
+
+    th,
+    td {
+      border-bottom: 1px solid var(--line);
+      padding: 10px 8px;
+      text-align: left;
+      vertical-align: top;
+    }
+
+    th {
+      font-weight: 800;
+      color: var(--muted);
+      background: #fafbfe;
+    }
+
+    .pill {
+      display: inline-block;
+      padding: 4px 9px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 700;
+      background: var(--accent-soft);
+      color: var(--accent);
+      margin-right: 6px;
+      margin-bottom: 6px;
+    }
+
+    .code,
+    pre {
+      font-family: "SFMono-Regular", Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+    }
+
+    pre {
+      margin: 14px 0;
+      padding: 16px 18px;
+      border-radius: 16px;
+      background: var(--mono-bg);
+      color: var(--mono-ink);
+      overflow-x: auto;
+      font-size: 13px;
+      line-height: 1.55;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+
+    .example-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+    }
+
+    .example-box {
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 16px 18px;
+      background: #fcfdff;
+    }
+
+    .example-box h4 {
+      margin: 0 0 10px;
+      font-size: 14px;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.02em;
+    }
+
+    .note {
+      border-left: 4px solid var(--accent);
+      background: #f8faff;
+      padding: 12px 14px;
+      border-radius: 0 12px 12px 0;
+      margin: 14px 0;
+    }
+
+    .files li {
+      word-break: break-all;
+    }
+
+    .footer {
+      color: var(--muted);
+      font-size: 13px;
+      margin-top: 10px;
+    }
+
+    @media (max-width: 920px) {
+      .layout,
+      .example-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .hero,
+      .card {
+        padding: 24px 22px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <section class="hero">
+      <div class="eyebrow">Binary Benchmark Explainer</div>
+      <h1>보이스피싱 Binary Benchmark를 어떻게 0.8209 / 0.5373까지 끌어올렸는가</h1>
+      <p>
+        이번 실험의 핵심은 <strong>query를 바꾸지 않고</strong>, 즉 <strong>STT된 대화 원문을 그대로 유지한 채</strong>,
+        retrieval 단계에서만 original과 masked의 차이를 더 잘 드러내도록 benchmark를 다시 설계한 것이다.
+        아래 설명은 “왜 예전에는 잘 안 됐는지”, “무엇을 바꿨는지”, “최종적으로 왜 이 숫자가 나왔는지”를 순서대로 정리한 결과 설명서다.
+      </p>
+
+      <div class="summary-grid">
+        <div class="summary-box">
+          <h2>Canonical Primary</h2>
+          <div class="value">Original 0.8209</div>
+          <p>Binary benchmark + realistic retrieval regime + threshold scoring 기준.</p>
+        </div>
+        <div class="summary-box">
+          <h2>Canonical Primary</h2>
+          <div class="value">Masked 0.5373</div>
+          <p>동일한 query, 동일한 benchmark에서 masked corpus만 바꿔 측정한 결과.</p>
+        </div>
+        <div class="summary-box">
+          <h2>Threshold</h2>
+          <div class="value">61.419</div>
+          <p>이번 binary pilot에서 original/masked gap을 가장 잘 설명한 threshold.</p>
+        </div>
+        <div class="summary-box">
+          <h2>Research Constraint</h2>
+          <div class="value">STT Raw Query</div>
+          <p>query는 요약문이 아니라 <strong>원문 transcript 그대로</strong> 유지했다.</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="layout">
+      <div>
+        <article class="card">
+          <h2 class="section-title">1. 왜 예전에는 gap이 잘 안 벌어졌나</h2>
+          <p>
+            이전 실험에서 가장 큰 문제는 두 가지였다. 첫째, query가 이미 대화 전체를 담고 있어서
+            judge나 retrieval이 <em>generic 금융상담 표현</em>만 보고도 너무 쉽게 맞출 수 있었다.
+            둘째, negative로 들어간 bank_call과 positive인 voicephishing가 lexical하게 너무 비슷했기 때문에,
+            masked corpus에서도 retrieval이 충분히 망가지지 않았다.
+          </p>
+          <p>
+            실제로 LLM judge를 붙이면 두 방향 모두 실패했다.
+            similarity judge는 original과 masked를 비슷하게 만들었고,
+            evidence judge는 둘 다 너무 높게 만들어 버렸다.
+            그래서 이번 iteration에서는 <strong>judge를 주인공으로 두지 않고, retrieval-threshold 결과를 canonical artifact로 삼는 방향</strong>으로 전환했다.
+          </p>
+
+          <div class="note">
+            <strong>핵심 전환점:</strong> “masked를 judge에게서 떨어뜨리자”가 아니라
+            <strong>“masked를 retrieval 단계에서 먼저 떨어뜨리고, judge는 나중에 보자”</strong>로 전략을 바꿨다.
+          </div>
+        </article>
+
+        <article class="card">
+          <h2 class="section-title">2. 이번에 바꾼 설계: 무엇이 달라졌나</h2>
+
+          <h3>2-1. Irrelevant를 빼고 binary benchmark로 재정의</h3>
+          <p>
+            tuning loop에서는 irrelevant를 제거했다. 이유는 간단하다. irrelevant는 대부분 너무 쉽게 맞기 때문에
+            전체 accuracy를 예쁘게 보이게 만들 뿐, 진짜 어려운 문제인 <strong>voicephishing vs suspicious bank_call</strong>을 제대로 드러내지 못했다.
+          </p>
+          <ul>
+            <li>최종 tuning dataset: <strong>voicephishing 34 + bank_call 33 = 67 rows</strong></li>
+            <li>파일: <span class="code">data/reinforced_v5_binary_qa_67.csv</span></li>
+          </ul>
+
+          <h3>2-2. Query는 그대로, search_text만 바꿈</h3>
+          <p>
+            연구 제약상 query는 반드시 STT된 대화 원문이어야 했다. 그래서 query 자체는 바꾸지 않았다.
+            대신 BM25가 실제로 보는 <span class="code">search_text</span>를 조정했다.
+          </p>
+          <ul>
+            <li>generic 금융상담 표현은 줄였다</li>
+            <li>이름, 은행명, 주소, 사건번호 같은 <strong>identifier anchor</strong>는 더 강조했다</li>
+            <li>앱 설치, 링크 접속, 인증번호 제공 같은 <strong>사기 행동 anchor</strong>도 canonical token으로 잡았다</li>
+          </ul>
+
+          <h3>2-3. Masking을 token 치환에서 bundle 치환으로 강화</h3>
+          <p>
+            예전에는 개별 placeholder를 noise token으로 바꾸는 정도였다. 그런데 이렇게 하면 여전히
+            “고객보호센터”, “이상거래”, “본인확인” 같은 generic 구조가 많이 살아남았다.
+            그래서 이번에는 식별 정보를 <strong>묶음 단위(bundle)</strong>로 더 강하게 압축했다.
+          </p>
+          <div class="example-grid">
+            <div class="example-box">
+              <h4>Original-like anchor</h4>
+              <pre>국민은행 고객보호센터 이상거래확인실입니다.
+김민정 고객님 맞으시죠?
+서울 강서구 주소와 사건번호 2026형제18000을 확인하겠습니다.</pre>
+            </div>
+            <div class="example-box">
+              <h4>Masked bundle</h4>
+              <pre>[기관연락처]입니다.
+[개인식별묶음]을 확인하겠습니다.
+[사건접수식별자] 관련 안내입니다.</pre>
+            </div>
+          </div>
+        </article>
+
+        <article class="card">
+          <h2 class="section-title">3. Retrieval scoring을 어떻게 조정했나</h2>
+          <p>
+            BM25 top score만 threshold에 넣으면 bank_call 쪽이 여전히 너무 강했다.
+            그래서 이번에는 retrieval score 위에 아주 얇은 signal adjustment를 추가했다.
+          </p>
+
+          <table>
+            <thead>
+              <tr>
+                <th>신호</th>
+                <th>의미</th>
+                <th>효과</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>사기 행동 anchor</td>
+                <td>앱 설치, 링크 접속, 인증번호 제공, 원격 제어, 이체 유도</td>
+                <td>점수 소폭 증가</td>
+              </tr>
+              <tr>
+                <td>정상 해결 anchor</td>
+                <td>공식 앱 확인, 대표번호 재통화, 영업점 방문, 내부 검토 대기</td>
+                <td>점수 강하게 감소</td>
+              </tr>
+            </tbody>
+          </table>
+
+          <p>
+            이 조정 덕분에 voicephishing는 더 잘 살아났고, bank_call는
+            “수상하지만 실제 정상 해결 흐름을 가진 통화”라는 점이 threshold 단계에서 반영되기 시작했다.
+          </p>
+
+          <pre>final_score = bm25_top1
+            + (사기 행동 anchor 개수 × 작은 보너스)
+            - (정상 해결 anchor 개수 × 큰 페널티)</pre>
+        </article>
+
+        <article class="card">
+          <h2 class="section-title">4. 최종 결과는 어떻게 읽어야 하나</h2>
+
+          <h3>4-1. Canonical primary result</h3>
+          <div class="metric-grid">
+            <div class="metric-box good">
+              <h2>Original</h2>
+              <div class="value">0.8209</div>
+              <p>voicephishing recall 0.7059, bank_call specificity 0.9394</p>
+            </div>
+            <div class="metric-box warn">
+              <h2>Masked</h2>
+              <div class="value">0.5373</div>
+              <p>voicephishing recall 0.1471, bank_call specificity 0.9394</p>
+            </div>
+          </div>
+
+          <p>
+            이 숫자가 중요한 이유는 단순히 “예쁘게 높은 accuracy”가 아니라,
+            <strong>동일한 query 조건에서 original만 잘 살아 있고 masked는 분명히 무너졌기 때문</strong>이다.
+            이게 바로 이번 benchmark가 원래 측정하려던 현상이다.
+          </p>
+
+          <h3>4-2. 왜 LLM judge 결과는 canonical이 아닌가</h3>
+          <table>
+            <thead>
+              <tr>
+                <th>Judge mode</th>
+                <th>Original</th>
+                <th>Masked</th>
+                <th>해석</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Similarity judge</td>
+                <td>0.7015</td>
+                <td>0.6567</td>
+                <td>gap이 너무 작음</td>
+              </tr>
+              <tr>
+                <td>Evidence judge</td>
+                <td>0.9701</td>
+                <td>0.9403</td>
+                <td>둘 다 너무 높아져서 gap이 흐려짐</td>
+              </tr>
+            </tbody>
+          </table>
+
+          <p>
+            즉 judge를 붙이면 시스템이 더 “똑똑해지는” 대신,
+            retrieval 단계에서 만들어둔 차이를 덮어버리는 현상이 다시 나타났다.
+            그래서 이번 iteration에서는 <strong>retrieval-threshold 결과를 대표 결과로 쓰는 것이 더 정직하다</strong>.
+          </p>
+        </article>
+      </div>
+
+      <div>
+        <article class="card">
+          <h2 class="section-title">핵심 설계 포인트 요약</h2>
+          <p><span class="pill">Constraint kept</span> query는 raw STT transcript 그대로 유지</p>
+          <p><span class="pill">Dataset reset</span> irrelevant 제거, binary tuning으로 집중</p>
+          <p><span class="pill">Masking upgrade</span> bundle masking 도입</p>
+          <p><span class="pill">Retrieval focus</span> generic 표현은 낮추고 identifier/scam anchor는 강조</p>
+          <p><span class="pill">Realistic regime</span> exact same sample만 제외, same-family는 허용</p>
+          <p><span class="pill">Threshold tuned</span> threshold 61.419에서 target band 도달</p>
+        </article>
+
+        <article class="card">
+          <h2 class="section-title">예시: 왜 original은 살고 masked는 죽는가</h2>
+          <p>
+            아래처럼 query가 동일한 transcript라고 해도, original corpus에서는 rare anchor가 살아 있기 때문에
+            같은 family 문서를 잘 찾는다. 반면 masked corpus에서는 그 rare anchor가 bundle로 압축되면서
+            retrieval이 더 어려워진다.
+          </p>
+          <pre>Query (raw transcript)
+“국민은행 고객보호센터라면서
+김민정 이름과 서울 강서구 주소를 확인하고
+앱 설치 후 인증번호를 불러달라고 했다.”</pre>
+          <pre>Original corpus가 보는 핵심
+국민은행 / 김민정 / 강서구 / 사건번호 / 앱설치 / 인증번호제공</pre>
+          <pre>Masked corpus가 보는 핵심
+[기관연락처] / [개인식별묶음] / [사건접수식별자] / 앱설치 / 인증번호제공</pre>
+          <p>
+            결국 original에서는 “누구/어디/어느 기관/어떤 사건”까지 맞아떨어지고,
+            masked에서는 “generic suspicious structure”만 남는다.
+            이 차이가 threshold 단계에서 final gap으로 연결되었다.
+          </p>
+        </article>
+
+        <article class="card">
+          <h2 class="section-title">산출물 파일</h2>
+          <ul class="files">
+            <li><span class="code">docs/plans/2026-04-19-binary-benchmark-results.md</span></li>
+            <li><span class="code">data/reinforced_v5_binary_qa_67.csv</span></li>
+            <li><span class="code">data/reinforced_v5_binary_original_threshold_results.csv</span></li>
+            <li><span class="code">data/reinforced_v5_binary_masked_threshold_results.csv</span></li>
+            <li><span class="code">data/reinforced_v5_binary_original_gpt4omini_results.csv</span></li>
+            <li><span class="code">data/reinforced_v5_binary_masked_gpt4omini_results.csv</span></li>
+            <li><span class="code">data/reinforced_v5_binary_original_gpt4omini_evidence_results.csv</span></li>
+            <li><span class="code">data/reinforced_v5_binary_masked_gpt4omini_evidence_results.csv</span></li>
+          </ul>
+        </article>
+
+        <article class="card">
+          <h2 class="section-title">짧은 결론</h2>
+          <p>
+            이번 결과는 “모델을 더 똑똑하게 해서 맞춘 것”이 아니라,
+            <strong>benchmark가 실제로 보고 싶었던 retrieval sensitivity를 더 잘 드러내도록 설계를 바꾼 결과</strong>다.
+          </p>
+          <p>
+            그래서 이번 숫자
+            <strong>original 0.8209 / masked 0.5373</strong>
+            는 단순 accuracy보다,
+            <strong>“개인정보 anchor가 살아 있는 corpus와 그렇지 않은 corpus의 retrieval 차이”</strong>를 보여주는 데 의미가 있다.
+          </p>
+        </article>
+      </div>
+    </section>
+
+    <div class="footer">
+      Generated for the 2026-04-20 experiment explanation checkpoint.
+    </div>
+  </main>
+</body>
+</html>
