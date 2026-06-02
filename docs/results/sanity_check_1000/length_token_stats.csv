@@ -1,0 +1,3 @@
+source_type,count,char_mean,char_median,char_q25,char_q75,token_mean,token_median,token_q25,token_q75,line_mean,line_median,line_q25,line_q75,unique_source_samples,unique_families
+bank_call,500,1367.798,1363.0,1243.0,1451.5,251.892,245.0,233.0,270.0,17.058,18.0,17.0,18.0,33,1
+voicephishing,500,751.996,773.0,655.75,840.0,136.05,134.0,121.0,151.0,17.184,18.0,18.0,18.0,34,2

@@ -1,0 +1,459 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Masked Advanced RAG Final Experiment Slides</title>
+  <style>
+    :root {
+      --bg: #070a13;
+      --bg2: #0d1224;
+      --card: rgba(255,255,255,.085);
+      --card2: rgba(255,255,255,.135);
+      --text: #f7f9ff;
+      --muted: #aeb8d4;
+      --blue: #68a7ff;
+      --cyan: #56e7ff;
+      --purple: #b389ff;
+      --pink: #ff6fae;
+      --orange: #ffb86b;
+      --green: #6af0a7;
+      --red: #ff6464;
+      --yellow: #ffe36e;
+      --line: rgba(255,255,255,.18);
+      --shadow: 0 24px 80px rgba(0,0,0,.45);
+      --r: 28px;
+    }
+    * { box-sizing: border-box; }
+    html, body { margin:0; width:100%; height:100%; overflow:hidden; background:var(--bg); color:var(--text); font-family: ui-sans-serif, -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Noto Sans KR", "Segoe UI", sans-serif; }
+    body::before {
+      content:""; position:fixed; inset:-20%; pointer-events:none; z-index:0;
+      background:
+        radial-gradient(circle at 8% 12%, rgba(104,167,255,.28), transparent 30%),
+        radial-gradient(circle at 86% 18%, rgba(255,111,174,.22), transparent 32%),
+        radial-gradient(circle at 74% 86%, rgba(86,231,255,.18), transparent 34%),
+        linear-gradient(135deg, #050812 0%, #101934 52%, #070a13 100%);
+      filter:saturate(1.1);
+    }
+    .deck { position:relative; z-index:1; width:100vw; height:100vh; }
+    .slide {
+      position:absolute; inset:0; display:none; padding:58px 70px 54px;
+      width:100vw; height:100vh; overflow:hidden;
+    }
+    .slide.active { display:flex; flex-direction:column; animation: fade .34s ease-out; }
+    @keyframes fade { from { opacity:.25; transform:translateY(8px) scale(.995); } to { opacity:1; transform:none; } }
+    .slide::after {
+      content:""; position:absolute; inset:18px; border:1px solid rgba(255,255,255,.1); border-radius:34px; pointer-events:none;
+      background: linear-gradient(135deg, rgba(255,255,255,.06), rgba(255,255,255,0) 30%, rgba(255,255,255,.035));
+      mask: linear-gradient(#000,#000) content-box, linear-gradient(#000,#000); -webkit-mask-composite:xor; mask-composite:exclude; padding:1px;
+    }
+    .topline { display:flex; align-items:center; justify-content:space-between; gap:24px; margin-bottom:18px; color:var(--muted); font-size:17px; letter-spacing:.02em; }
+    .badge { display:inline-flex; align-items:center; gap:9px; border:1px solid rgba(255,255,255,.18); background:rgba(255,255,255,.07); padding:9px 14px; border-radius:999px; color:#dce7ff; font-weight:700; }
+    .dot { width:9px; height:9px; border-radius:50%; background:linear-gradient(135deg,var(--cyan),var(--blue)); box-shadow:0 0 18px var(--cyan); }
+    h1 { margin:0; font-size:70px; line-height:1.02; letter-spacing:-.055em; font-weight:900; }
+    h2 { margin:0 0 14px; font-size:48px; line-height:1.08; letter-spacing:-.045em; font-weight:900; }
+    h3 { margin:0 0 10px; font-size:28px; letter-spacing:-.025em; }
+    p { margin:0; color:#d8def2; font-size:24px; line-height:1.42; letter-spacing:-.02em; }
+    .lead { color:#dfe7ff; font-size:30px; line-height:1.35; max-width:1050px; }
+    .muted { color:var(--muted); }
+    .accent { color:var(--cyan); }
+    .pink { color:var(--pink); }
+    .green { color:var(--green); }
+    .yellow { color:var(--yellow); }
+    .grid { display:grid; gap:22px; }
+    .cols2 { grid-template-columns: 1fr 1fr; }
+    .cols3 { grid-template-columns: repeat(3, 1fr); }
+    .cols4 { grid-template-columns: repeat(4, 1fr); }
+    .card { background:var(--card); border:1px solid rgba(255,255,255,.14); border-radius:var(--r); box-shadow:var(--shadow); padding:28px; backdrop-filter: blur(16px); }
+    .card.soft { background:rgba(255,255,255,.06); box-shadow:none; }
+    .card.hot { background:linear-gradient(135deg, rgba(104,167,255,.20), rgba(179,137,255,.13)); border-color:rgba(104,167,255,.35); }
+    .card.problem { background:linear-gradient(135deg, rgba(255,100,100,.20), rgba(255,184,107,.10)); border-color:rgba(255,100,100,.35); }
+    .card.solution { background:linear-gradient(135deg, rgba(106,240,167,.18), rgba(86,231,255,.10)); border-color:rgba(106,240,167,.32); }
+    .kpi { display:flex; flex-direction:column; gap:6px; }
+    .kpi .num { font-size:58px; line-height:1; font-weight:950; letter-spacing:-.055em; }
+    .kpi .label { font-size:18px; color:var(--muted); font-weight:800; text-transform:uppercase; letter-spacing:.06em; }
+    .pillrow { display:flex; flex-wrap:wrap; gap:10px; margin-top:20px; }
+    .pill { padding:10px 14px; border:1px solid rgba(255,255,255,.16); border-radius:999px; color:#eaf0ff; background:rgba(255,255,255,.07); font-size:18px; font-weight:800; }
+    .stage { position:relative; display:flex; align-items:center; justify-content:center; flex:1; min-height:0; }
+    .bigcard { width:min(1120px, 100%); }
+    .footer { margin-top:auto; display:flex; justify-content:space-between; align-items:flex-end; color:rgba(220,230,255,.62); font-size:15px; }
+    .progress { position:fixed; left:0; bottom:0; height:5px; background:linear-gradient(90deg,var(--cyan),var(--purple),var(--pink)); z-index:9; width:0%; box-shadow:0 0 20px rgba(86,231,255,.7); transition:width .25s ease; }
+    .navhint { position:fixed; right:24px; bottom:18px; z-index:10; color:rgba(255,255,255,.5); font-size:13px; }
+    .slideNo { font-weight:800; color:#d9e3ff; }
+    .arrow { display:flex; align-items:center; justify-content:center; color:var(--muted); font-size:44px; font-weight:100; }
+    .pipeline { display:grid; grid-template-columns: 1fr 70px 1fr 70px 1fr; align-items:stretch; gap:14px; margin-top:30px; }
+    .mini { font-size:18px; line-height:1.35; color:#c9d3ee; }
+    .tiny { font-size:14px; color:#9ca8c4; }
+    .table { width:100%; border-collapse:separate; border-spacing:0 12px; font-size:22px; }
+    .table th { color:#aeb8d4; text-align:left; font-size:16px; letter-spacing:.06em; text-transform:uppercase; padding:0 16px; }
+    .table td { background:rgba(255,255,255,.075); border-top:1px solid rgba(255,255,255,.11); border-bottom:1px solid rgba(255,255,255,.11); padding:18px 16px; font-weight:800; }
+    .table td:first-child { border-left:1px solid rgba(255,255,255,.11); border-radius:18px 0 0 18px; }
+    .table td:last-child { border-right:1px solid rgba(255,255,255,.11); border-radius:0 18px 18px 0; }
+    .barChart { width:100%; height:420px; display:block; overflow:visible; }
+    .axisText { fill:#aeb8d4; font-size:15px; font-weight:700; }
+    .barLabel { fill:#f7f9ff; font-size:21px; font-weight:900; }
+    .legend { display:flex; gap:18px; align-items:center; color:#cfd8f3; font-weight:800; }
+    .legend span::before { content:""; display:inline-block; width:14px; height:14px; border-radius:4px; margin-right:8px; vertical-align:-2px; background:var(--c); }
+    .split { display:grid; grid-template-columns: .9fr 1.1fr; gap:26px; align-items:center; }
+    .callout { font-size:34px; line-height:1.24; letter-spacing:-.04em; font-weight:900; }
+    .quote { border-left:5px solid var(--cyan); padding-left:22px; color:#eff5ff; font-size:30px; line-height:1.35; font-weight:800; }
+    .matrix { display:grid; grid-template-columns: 130px repeat(2, 1fr); gap:10px; align-items:stretch; }
+    .matrix div { border-radius:18px; padding:18px; background:rgba(255,255,255,.075); border:1px solid rgba(255,255,255,.12); text-align:center; font-weight:900; }
+    .matrix .head { background:rgba(104,167,255,.16); color:#dce9ff; }
+    .matrix .good { background:rgba(106,240,167,.18); color:#caffdf; }
+    .matrix .bad { background:rgba(255,100,100,.17); color:#ffd0d0; }
+    .flowSvg text { font-family:inherit; }
+    .phone { width:210px; height:390px; border:2px solid rgba(255,255,255,.25); border-radius:38px; background:linear-gradient(180deg, rgba(255,255,255,.12), rgba(255,255,255,.04)); padding:22px; box-shadow:var(--shadow); }
+    .msg { padding:11px 13px; border-radius:16px; margin:10px 0; font-size:14px; line-height:1.25; }
+    .msg.a { background:rgba(104,167,255,.2); color:#e7f1ff; margin-right:18px; }
+    .msg.b { background:rgba(255,111,174,.18); color:#ffe5f0; margin-left:18px; }
+    .maskToken { display:inline-block; padding:5px 8px; border-radius:8px; background:rgba(255,227,110,.14); color:#ffe36e; font-weight:900; border:1px solid rgba(255,227,110,.24); }
+    .sparkline { width:100%; height:80px; }
+    .finalTitle { font-size:62px; }
+    @media print {
+      html, body { overflow:visible; background:#090d18; }
+      .deck { height:auto; }
+      .slide { position:relative; display:flex !important; page-break-after:always; width:100vw; height:56.25vw; max-height:100vh; }
+      .progress, .navhint { display:none; }
+    }
+  </style>
+</head>
+<body>
+  <div class="deck" id="deck">
+    <section class="slide active">
+      <div class="topline"><span class="badge"><span class="dot"></span> Final Experiment Deck</span><span>Voice Phishing RAG · PII Masking · Advanced RAG</span></div>
+      <div class="stage">
+        <div class="bigcard card hot">
+          <h1>개인정보 마스킹 환경의<br><span class="accent">보이스피싱 RAG</span> 실험</h1>
+          <p class="lead" style="margin-top:26px;">Masked Naive RAG에서 발생한 성능 저하를 구조적 패턴 기반 Advanced RAG로 회복하는 최종 실험</p>
+          <div class="pillrow">
+            <span class="pill">Original Naive</span><span class="pill">Masked Naive</span><span class="pill">Masked Advanced</span><span class="pill">67-row Binary Benchmark</span>
+          </div>
+        </div>
+      </div>
+      <div class="footer"><span>김병욱 · 졸업프로젝트</span><span class="slideNo">01 / 12</span></div>
+    </section>
+
+    <section class="slide">
+      <div class="topline"><span class="badge"><span class="dot"></span> Research Story</span><span>문제 → 원인 → 해결</span></div>
+      <h2>우리가 보여줘야 하는 핵심 스토리</h2>
+      <div class="stage">
+        <div class="pipeline bigcard">
+          <div class="card hot">
+            <h3>1. 원본 데이터</h3>
+            <p>이름, 주소, 은행명, 사건번호 등 식별 단서가 retrieval에 직접 활용됨</p>
+            <div class="kpi" style="margin-top:28px"><span class="label">Naive RAG</span><span class="num green">0.8209</span></div>
+          </div>
+          <div class="arrow">→</div>
+          <div class="card problem">
+            <h3>2. 개인정보 마스킹</h3>
+            <p>query와 corpus 사이의 직접 연결 단서가 사라져 검색 근거 약화</p>
+            <div class="kpi" style="margin-top:28px"><span class="label">Masked Naive</span><span class="num pink">0.5373</span></div>
+          </div>
+          <div class="arrow">→</div>
+          <div class="card solution">
+            <h3>3. Advanced RAG</h3>
+            <p>식별자 대신 보이스피싱 구조와 사기 행동 패턴으로 근거 회복</p>
+            <div class="kpi" style="margin-top:28px"><span class="label">Masked Advanced</span><span class="num green">0.9104</span></div>
+          </div>
+        </div>
+      </div>
+      <div class="footer"><span>핵심은 “masked로 성능이 떨어졌다”를 먼저 부각하는 것</span><span class="slideNo">02 / 12</span></div>
+    </section>
+
+    <section class="slide">
+      <div class="topline"><span class="badge"><span class="dot"></span> Data Design</span><span>원본과 마스킹을 같은 구조로 맞춤</span></div>
+      <h2>데이터 구축 방향</h2>
+      <div class="stage split">
+        <div class="card">
+          <h3>Corpus & QA 구성</h3>
+          <table class="table">
+            <tr><th>Item</th><th>Design</th></tr>
+            <tr><td>Corpus</td><td>보이스피싱 유형별 시나리오</td></tr>
+            <tr><td>QA</td><td>보이스피싱 yes / 정상 금융통화 no</td></tr>
+            <tr><td>Question</td><td>고정 yes/no 질문</td></tr>
+            <tr><td>Regime</td><td>realistic retrieval</td></tr>
+          </table>
+        </div>
+        <div class="card soft">
+          <div class="phone">
+            <div class="msg a">금융보호지원센터입니다. 김하늘 씨 맞으신가요?</div>
+            <div class="msg b">네, 맞습니다.</div>
+            <div class="msg a">경기 성남시 분당구 주소로 등록되어 있습니다.</div>
+            <div class="msg b">어떤 일인가요?</div>
+            <div class="msg a">보호 절차를 위해 링크 접속 후 앱 설치가 필요합니다.</div>
+          </div>
+          <div style="position:absolute; right:84px; bottom:118px; width:420px;" class="card problem">
+            <h3>Masking 후</h3>
+            <p><span class="maskToken">[이름]</span>, <span class="maskToken">[주소]</span>, <span class="maskToken">[기관명]</span>, <span class="maskToken">[계좌]</span> → 직접 검색 단서 약화</p>
+          </div>
+        </div>
+      </div>
+      <div class="footer"><span>목표: 개인정보 보호 조건에서도 동일한 QA로 공정 비교</span><span class="slideNo">03 / 12</span></div>
+    </section>
+
+    <section class="slide">
+      <div class="topline"><span class="badge"><span class="dot"></span> Problem Evidence</span><span>Masked Naive RAG의 성능 저하</span></div>
+      <h2>마스킹을 하자 Naive RAG 성능이 크게 하락</h2>
+      <div class="stage split">
+        <div class="card problem">
+          <p class="callout">Original Naive RAG<br><span class="green">0.8209</span></p>
+          <p style="margin:24px 0" class="callout">→ Masked Naive RAG<br><span class="pink">0.5373</span></p>
+          <p class="muted">동일 QA, 동일 retrieval 조건에서 개인정보/식별자 제거만으로 overall accuracy가 크게 감소</p>
+        </div>
+        <div class="card">
+          <svg class="barChart" viewBox="0 0 720 420" role="img" aria-label="Original vs Masked Naive accuracy">
+            <line x1="80" y1="350" x2="660" y2="350" stroke="rgba(255,255,255,.22)" />
+            <line x1="80" y1="70" x2="80" y2="350" stroke="rgba(255,255,255,.22)" />
+            <text x="64" y="350" class="axisText" text-anchor="end">0</text>
+            <text x="64" y="210" class="axisText" text-anchor="end">0.5</text>
+            <text x="64" y="70" class="axisText" text-anchor="end">1.0</text>
+            <rect x="155" y="120.1" width="160" height="229.9" rx="18" fill="url(#gBlue)" />
+            <rect x="405" y="199.6" width="160" height="150.4" rx="18" fill="url(#gRed)" />
+            <text x="235" y="104" class="barLabel" text-anchor="middle">0.8209</text>
+            <text x="485" y="184" class="barLabel" text-anchor="middle">0.5373</text>
+            <text x="235" y="386" class="axisText" text-anchor="middle">Original Naive</text>
+            <text x="485" y="386" class="axisText" text-anchor="middle">Masked Naive</text>
+            <defs>
+              <linearGradient id="gBlue" x1="0" x2="0" y1="0" y2="1"><stop stop-color="#56e7ff"/><stop offset="1" stop-color="#68a7ff"/></linearGradient>
+              <linearGradient id="gRed" x1="0" x2="0" y1="0" y2="1"><stop stop-color="#ffb86b"/><stop offset="1" stop-color="#ff6464"/></linearGradient>
+            </defs>
+          </svg>
+        </div>
+      </div>
+      <div class="footer"><span>문제 정의: 마스킹은 RAG 검색 근거 연결성을 약화시킨다</span><span class="slideNo">04 / 12</span></div>
+    </section>
+
+    <section class="slide">
+      <div class="topline"><span class="badge"><span class="dot"></span> Error Anatomy</span><span>성능 하락은 positive evidence retrieval 문제</span></div>
+      <h2>어디서 성능이 떨어졌나?</h2>
+      <div class="stage cols2 grid">
+        <div class="card">
+          <h3>Original Naive</h3>
+          <div class="matrix" style="margin-top:20px">
+            <div></div><div class="head">Pred yes</div><div class="head">Pred no</div>
+            <div class="head">GT yes</div><div class="good">24</div><div class="bad">10</div>
+            <div class="head">GT no</div><div class="bad">2</div><div class="good">31</div>
+          </div>
+          <p class="mini" style="margin-top:18px">voicephishing recall이 어느 정도 유지됨</p>
+        </div>
+        <div class="card problem">
+          <h3>Masked Naive</h3>
+          <div class="matrix" style="margin-top:20px">
+            <div></div><div class="head">Pred yes</div><div class="head">Pred no</div>
+            <div class="head">GT yes</div><div class="good">5</div><div class="bad">29</div>
+            <div class="head">GT no</div><div class="bad">2</div><div class="good">31</div>
+          </div>
+          <p class="mini" style="margin-top:18px">보이스피싱 positive가 no로 떨어지는 FN이 급증</p>
+        </div>
+      </div>
+      <div class="footer"><span>Bank call은 유지되지만, masked positive evidence를 못 찾는 것이 핵심 문제</span><span class="slideNo">05 / 12</span></div>
+    </section>
+
+    <section class="slide">
+      <div class="topline"><span class="badge"><span class="dot"></span> Why It Fails</span><span>식별자 기반 retrieval cue 손실</span></div>
+      <h2>Masked Naive RAG의 실패 원인</h2>
+      <div class="stage">
+        <svg class="flowSvg" viewBox="0 0 1120 520" width="1120" height="520" role="img" aria-label="masking breaks retrieval links">
+          <defs>
+            <filter id="glow"><feGaussianBlur stdDeviation="4" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+            <linearGradient id="nodeA" x1="0" x2="1"><stop stop-color="#68a7ff"/><stop offset="1" stop-color="#56e7ff"/></linearGradient>
+            <linearGradient id="nodeB" x1="0" x2="1"><stop stop-color="#ffb86b"/><stop offset="1" stop-color="#ff6464"/></linearGradient>
+          </defs>
+          <rect x="40" y="80" width="300" height="330" rx="28" fill="rgba(255,255,255,.08)" stroke="rgba(255,255,255,.16)"/>
+          <text x="190" y="130" fill="#fff" font-size="28" font-weight="900" text-anchor="middle">Query</text>
+          <text x="80" y="185" fill="#cfd8f3" font-size="22">김하늘</text>
+          <text x="80" y="230" fill="#cfd8f3" font-size="22">하나은행</text>
+          <text x="80" y="275" fill="#cfd8f3" font-size="22">분당구 주소</text>
+          <text x="80" y="320" fill="#cfd8f3" font-size="22">앱 설치</text>
+          <text x="80" y="365" fill="#cfd8f3" font-size="22">인증번호 요구</text>
+          <rect x="780" y="80" width="300" height="330" rx="28" fill="rgba(255,255,255,.08)" stroke="rgba(255,255,255,.16)"/>
+          <text x="930" y="130" fill="#fff" font-size="28" font-weight="900" text-anchor="middle">Masked Corpus</text>
+          <text x="820" y="185" fill="#ffe36e" font-size="22">[이름]</text>
+          <text x="820" y="230" fill="#ffe36e" font-size="22">[은행]</text>
+          <text x="820" y="275" fill="#ffe36e" font-size="22">[주소]</text>
+          <text x="820" y="320" fill="#cfd8f3" font-size="22">앱 설치</text>
+          <text x="820" y="365" fill="#cfd8f3" font-size="22">인증번호 요구</text>
+          <path d="M350 190 C470 120, 620 120, 770 190" stroke="url(#nodeA)" stroke-width="7" fill="none" opacity=".25"/>
+          <path d="M350 240 C490 210, 610 210, 770 240" stroke="url(#nodeA)" stroke-width="7" fill="none" opacity=".18"/>
+          <path d="M350 300 C510 355, 610 355, 770 300" stroke="url(#nodeB)" stroke-width="9" fill="none" stroke-dasharray="16 16" filter="url(#glow)"/>
+          <text x="560" y="88" fill="#aeb8d4" font-size="20" text-anchor="middle">식별자 link 약화</text>
+          <text x="560" y="428" fill="#ffb0b0" font-size="27" font-weight="900" text-anchor="middle">검색 후보가 관련 문맥을 놓침 → positive evidence 부족</text>
+        </svg>
+      </div>
+      <div class="footer"><span>마스킹은 개인정보 보호에는 필요하지만, lexical RAG에는 retrieval cue 손실을 만든다</span><span class="slideNo">06 / 12</span></div>
+    </section>
+
+    <section class="slide">
+      <div class="topline"><span class="badge"><span class="dot"></span> Advanced RAG Design</span><span>식별자 대신 구조적 패턴 사용</span></div>
+      <h2>Advanced RAG: 무엇을 추가했나?</h2>
+      <div class="stage grid cols3">
+        <div class="card solution">
+          <h3>Scam Flow Features</h3>
+          <p class="mini">수사/사건 연루, 이상거래 감지, 본인확인, 보호 절차, 긴급성·고립 유도 등 대화 흐름을 feature로 추출</p>
+          <div class="pillrow"><span class="pill">사건 연루</span><span class="pill">보호 절차</span><span class="pill">긴급성</span></div>
+        </div>
+        <div class="card hot">
+          <h3>Scam Action Features</h3>
+          <p class="mini">링크 접속, 앱 설치, 인증번호 제공, 원격제어, 송금 유도처럼 보이스피싱 실행 행동을 강한 신호로 사용</p>
+          <div class="pillrow"><span class="pill">링크</span><span class="pill">앱 설치</span><span class="pill">인증번호</span></div>
+        </div>
+        <div class="card problem">
+          <h3>Legitimate Penalty</h3>
+          <p class="mini">공식 앱 확인, 대표번호 재통화, 영업점 방문, 내부 검토 대기 등 정상 금융 상담 흐름은 no 방향으로 penalty</p>
+          <div class="pillrow"><span class="pill">공식 앱</span><span class="pill">대표번호</span><span class="pill">영업점</span></div>
+        </div>
+      </div>
+      <div class="footer"><span>핵심: 개인정보 단서가 아니라 보이스피싱의 구조와 행동 패턴으로 retrieval을 보완</span><span class="slideNo">07 / 12</span></div>
+    </section>
+
+    <section class="slide">
+      <div class="topline"><span class="badge"><span class="dot"></span> System Flow</span><span>BM25 + Pattern Reranking</span></div>
+      <h2>Advanced RAG 처리 흐름</h2>
+      <div class="stage">
+        <svg class="flowSvg" viewBox="0 0 1180 500" width="1180" height="500" role="img" aria-label="advanced rag pipeline">
+          <defs>
+            <linearGradient id="pipe" x1="0" x2="1"><stop stop-color="#56e7ff"/><stop offset="1" stop-color="#b389ff"/></linearGradient>
+            <marker id="arrow" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto"><path d="M2,2 L10,6 L2,10" fill="#9bc7ff"/></marker>
+          </defs>
+          <g font-family="inherit" font-weight="900">
+            <rect x="30" y="150" width="190" height="120" rx="24" fill="rgba(255,255,255,.08)" stroke="rgba(255,255,255,.18)"/>
+            <text x="125" y="205" fill="#fff" font-size="26" text-anchor="middle">Masked</text><text x="125" y="238" fill="#fff" font-size="26" text-anchor="middle">Query</text>
+            <line x1="230" y1="210" x2="350" y2="210" stroke="#9bc7ff" stroke-width="5" marker-end="url(#arrow)"/>
+            <rect x="360" y="90" width="210" height="100" rx="22" fill="rgba(104,167,255,.16)" stroke="rgba(104,167,255,.3)"/>
+            <text x="465" y="132" fill="#fff" font-size="24" text-anchor="middle">BM25</text><text x="465" y="162" fill="#cfd8f3" font-size="17" text-anchor="middle">candidate top-25</text>
+            <rect x="360" y="250" width="210" height="100" rx="22" fill="rgba(106,240,167,.14)" stroke="rgba(106,240,167,.3)"/>
+            <text x="465" y="292" fill="#fff" font-size="24" text-anchor="middle">Pattern</text><text x="465" y="322" fill="#cfd8f3" font-size="17" text-anchor="middle">flow/action/penalty</text>
+            <line x1="580" y1="140" x2="705" y2="210" stroke="#9bc7ff" stroke-width="5" marker-end="url(#arrow)"/>
+            <line x1="580" y1="300" x2="705" y2="230" stroke="#9bc7ff" stroke-width="5" marker-end="url(#arrow)"/>
+            <rect x="720" y="150" width="230" height="120" rx="24" fill="rgba(179,137,255,.18)" stroke="rgba(179,137,255,.35)"/>
+            <text x="835" y="202" fill="#fff" font-size="26" text-anchor="middle">Reranking</text><text x="835" y="235" fill="#cfd8f3" font-size="18" text-anchor="middle">advanced score</text>
+            <line x1="960" y1="210" x2="1070" y2="210" stroke="#9bc7ff" stroke-width="5" marker-end="url(#arrow)"/>
+            <rect x="1080" y="150" width="80" height="120" rx="24" fill="url(#pipe)" opacity=".92"/>
+            <text x="1120" y="202" fill="#06101d" font-size="26" text-anchor="middle">yes</text><text x="1120" y="235" fill="#06101d" font-size="26" text-anchor="middle">/no</text>
+          </g>
+          <text x="590" y="430" fill="#d8def2" font-size="26" font-weight="900" text-anchor="middle">Threshold: 75 · top_k: 1 · candidate_k: 25</text>
+        </svg>
+      </div>
+      <div class="footer"><span>LLM 호출 없이 retrieval/reranking 개선 효과를 독립적으로 확인</span><span class="slideNo">08 / 12</span></div>
+    </section>
+
+    <section class="slide">
+      <div class="topline"><span class="badge"><span class="dot"></span> Final Result</span><span>성능 회복 확인</span></div>
+      <h2>최종 결과: Masked Advanced RAG가 성능을 회복</h2>
+      <div class="stage">
+        <div class="card bigcard">
+          <svg class="barChart" viewBox="0 0 1040 430" role="img" aria-label="final accuracy comparison">
+            <defs>
+              <linearGradient id="b1" x1="0" x2="0" y1="0" y2="1"><stop stop-color="#56e7ff"/><stop offset="1" stop-color="#68a7ff"/></linearGradient>
+              <linearGradient id="b2" x1="0" x2="0" y1="0" y2="1"><stop stop-color="#ffb86b"/><stop offset="1" stop-color="#ff6464"/></linearGradient>
+              <linearGradient id="b3" x1="0" x2="0" y1="0" y2="1"><stop stop-color="#6af0a7"/><stop offset="1" stop-color="#56e7ff"/></linearGradient>
+            </defs>
+            <line x1="80" y1="350" x2="970" y2="350" stroke="rgba(255,255,255,.22)" />
+            <line x1="80" y1="70" x2="80" y2="350" stroke="rgba(255,255,255,.22)" />
+            <text x="62" y="350" class="axisText" text-anchor="end">0</text>
+            <text x="62" y="210" class="axisText" text-anchor="end">0.5</text>
+            <text x="62" y="70" class="axisText" text-anchor="end">1.0</text>
+            <rect x="170" y="120.1" width="150" height="229.9" rx="18" fill="url(#b1)"/>
+            <rect x="445" y="199.6" width="150" height="150.4" rx="18" fill="url(#b2)"/>
+            <rect x="720" y="95.1" width="150" height="254.9" rx="18" fill="url(#b3)"/>
+            <text x="245" y="103" class="barLabel" text-anchor="middle">0.8209</text>
+            <text x="520" y="183" class="barLabel" text-anchor="middle">0.5373</text>
+            <text x="795" y="78" class="barLabel" text-anchor="middle">0.9104</text>
+            <text x="245" y="386" class="axisText" text-anchor="middle">Original Naive</text>
+            <text x="520" y="386" class="axisText" text-anchor="middle">Masked Naive</text>
+            <text x="795" y="386" class="axisText" text-anchor="middle">Masked Advanced</text>
+            <path d="M320 130 C380 80, 435 90, 480 180" fill="none" stroke="#ff8080" stroke-width="5" stroke-dasharray="11 11"/>
+            <text x="405" y="72" fill="#ffb0b0" font-size="22" font-weight="900" text-anchor="middle">Masking Drop</text>
+            <path d="M595 190 C650 85, 705 78, 750 105" fill="none" stroke="#6af0a7" stroke-width="5" stroke-dasharray="11 11"/>
+            <text x="680" y="66" fill="#baffd7" font-size="22" font-weight="900" text-anchor="middle">Recovery</text>
+          </svg>
+        </div>
+      </div>
+      <div class="footer"><span>Masked Naive 대비 +0.3731p, Original Naive보다도 높은 실험 결과</span><span class="slideNo">09 / 12</span></div>
+    </section>
+
+    <section class="slide">
+      <div class="topline"><span class="badge"><span class="dot"></span> Source Breakdown</span><span>Positive evidence 회복</span></div>
+      <h2>Voicephishing positive 성능이 크게 회복됨</h2>
+      <div class="stage grid cols3">
+        <div class="card hot">
+          <div class="kpi"><span class="label">Original Naive · Voicephishing</span><span class="num">0.7059</span></div>
+          <p class="mini" style="margin-top:18px">24 / 34 correct</p>
+        </div>
+        <div class="card problem">
+          <div class="kpi"><span class="label">Masked Naive · Voicephishing</span><span class="num">0.1471</span></div>
+          <p class="mini" style="margin-top:18px">5 / 34 correct · FN 급증</p>
+        </div>
+        <div class="card solution">
+          <div class="kpi"><span class="label">Masked Advanced · Voicephishing</span><span class="num">0.8824</span></div>
+          <p class="mini" style="margin-top:18px">30 / 34 correct · 구조적 패턴으로 회복</p>
+        </div>
+      </div>
+      <div class="card soft" style="margin-top:24px">
+        <p class="quote">마스킹은 정상 통화 구분보다, 보이스피싱 positive evidence retrieval을 크게 약화시켰다. Advanced RAG는 이 손실을 패턴 기반 feature로 보완했다.</p>
+      </div>
+      <div class="footer"><span>Bank call accuracy는 세 실험 모두 0.9394로 안정적</span><span class="slideNo">10 / 12</span></div>
+    </section>
+
+    <section class="slide">
+      <div class="topline"><span class="badge"><span class="dot"></span> Report Message</span><span>보고서용 해석</span></div>
+      <h2>최종 보고서에 넣을 메시지</h2>
+      <div class="stage">
+        <div class="card bigcard">
+          <p class="quote">원본 corpus를 사용한 Naive RAG에서는 식별 단서가 retrieval에 활용되어 비교적 안정적인 성능을 보였다. 그러나 동일한 corpus를 개인정보 마스킹한 뒤 같은 Naive RAG를 적용하자, query와 corpus 사이의 직접적인 연결 단서가 줄어들면서 성능이 크게 저하되었다.</p>
+          <div class="grid cols2" style="margin-top:28px">
+            <div class="card problem soft"><h3>Problem</h3><p class="mini">마스킹으로 식별자 기반 retrieval cue가 사라져 positive evidence를 찾기 어려워짐</p></div>
+            <div class="card solution soft"><h3>Solution</h3><p class="mini">보이스피싱 구조적 패턴, 사기 행동, 대화 흐름 기반 Advanced RAG로 masked 환경 성능 회복</p></div>
+          </div>
+        </div>
+      </div>
+      <div class="footer"><span>과장 금지: “일반화 완료”보다 “현재 benchmark에서 회복 가능성 확인”</span><span class="slideNo">11 / 12</span></div>
+    </section>
+
+    <section class="slide">
+      <div class="topline"><span class="badge"><span class="dot"></span> Conclusion</span><span>Final Takeaway</span></div>
+      <div class="stage">
+        <div class="bigcard">
+          <h2 class="finalTitle">최종 결론</h2>
+          <div class="grid cols3" style="margin-top:30px">
+            <div class="card hot"><h3>1</h3><p>원본 Naive RAG는 식별 단서 덕분에 높은 기준 성능을 보였다.</p></div>
+            <div class="card problem"><h3>2</h3><p>개인정보 마스킹은 retrieval 연결성을 약화시켜 성능 저하를 만들었다.</p></div>
+            <div class="card solution"><h3>3</h3><p>Advanced RAG는 구조적 패턴을 활용해 masked 성능을 회복했다.</p></div>
+          </div>
+          <div class="card" style="margin-top:32px; text-align:center">
+            <p class="callout">Masked Naive <span class="pink">0.5373</span> → Masked Advanced <span class="green">0.9104</span></p>
+          </div>
+        </div>
+      </div>
+      <div class="footer"><span>Use ← / → keys · Print to PDF for 제출용</span><span class="slideNo">12 / 12</span></div>
+    </section>
+  </div>
+  <div class="progress" id="progress"></div>
+  <div class="navhint">← → 이동 · P 인쇄</div>
+  <script>
+    const slides = [...document.querySelectorAll('.slide')];
+    const progress = document.getElementById('progress');
+    let i = 0;
+    function show(n) {
+      i = Math.max(0, Math.min(slides.length - 1, n));
+      slides.forEach((s, idx) => s.classList.toggle('active', idx === i));
+      progress.style.width = ((i + 1) / slides.length * 100) + '%';
+      location.hash = String(i + 1).padStart(2, '0');
+    }
+    window.addEventListener('keydown', (e) => {
+      if (['ArrowRight','PageDown',' '].includes(e.key)) show(i + 1);
+      if (['ArrowLeft','PageUp','Backspace'].includes(e.key)) show(i - 1);
+      if (e.key.toLowerCase() === 'p') window.print();
+      if (e.key === 'Home') show(0);
+      if (e.key === 'End') show(slides.length - 1);
+    });
+    window.addEventListener('hashchange', () => {
+      const n = parseInt(location.hash.replace('#',''), 10);
+      if (!Number.isNaN(n)) show(n - 1);
+    });
+    const initial = parseInt(location.hash.replace('#',''), 10);
+    show(Number.isNaN(initial) ? 0 : initial - 1);
+  </script>
+</body>
+</html>

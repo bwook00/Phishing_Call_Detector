@@ -1,0 +1,34 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="900" height="360" viewBox="0 0 900 360">
+<rect width="100%" height="100%" fill="white"/>
+<text x="450.0" y="25" text-anchor="middle" font-family="Arial" font-size="18" font-weight="700">1000-row benchmark accuracy</text>
+<line x1="70" y1="270" x2="875" y2="270" stroke="#333"/>
+<line x1="70" y1="45" x2="70" y2="270" stroke="#333"/>
+<line x1="70" y1="270.0" x2="875" y2="270.0" stroke="#ddd"/>
+<text x="62" y="274.0" text-anchor="end" font-family="Arial" font-size="11">0.00</text>
+<line x1="70" y1="213.8" x2="875" y2="213.8" stroke="#ddd"/>
+<text x="62" y="217.8" text-anchor="end" font-family="Arial" font-size="11">0.25</text>
+<line x1="70" y1="157.5" x2="875" y2="157.5" stroke="#ddd"/>
+<text x="62" y="161.5" text-anchor="end" font-family="Arial" font-size="11">0.50</text>
+<line x1="70" y1="101.2" x2="875" y2="101.2" stroke="#ddd"/>
+<text x="62" y="105.2" text-anchor="end" font-family="Arial" font-size="11">0.75</text>
+<line x1="70" y1="45.0" x2="875" y2="45.0" stroke="#ddd"/>
+<text x="62" y="49.0" text-anchor="end" font-family="Arial" font-size="11">1.00</text>
+<rect x="93.5" y="76.2" width="87.2" height="193.8" fill="#55a868"/>
+<text x="137.1" y="70.2" text-anchor="middle" font-family="Arial" font-size="11">0.821</text>
+<text x="137.1" y="286" text-anchor="end" font-family="Arial" font-size="10" transform="rotate(-30 137.1,286)">retrieval_original_naive</text>
+<rect x="227.6" y="142.3" width="87.2" height="127.7" fill="#55a868"/>
+<text x="271.2" y="136.3" text-anchor="middle" font-family="Arial" font-size="11">0.541</text>
+<text x="271.2" y="286" text-anchor="end" font-family="Arial" font-size="10" transform="rotate(-30 271.2,286)">retrieval_masked_naive</text>
+<rect x="361.8" y="54.9" width="87.2" height="215.1" fill="#55a868"/>
+<text x="405.4" y="48.9" text-anchor="middle" font-family="Arial" font-size="11">0.911</text>
+<text x="405.4" y="286" text-anchor="end" font-family="Arial" font-size="10" transform="rotate(-30 405.4,286)">retrieval_masked_advanced</text>
+<rect x="496.0" y="58.9" width="87.2" height="211.1" fill="#55a868"/>
+<text x="539.6" y="52.9" text-anchor="middle" font-family="Arial" font-size="11">0.894</text>
+<text x="539.6" y="286" text-anchor="end" font-family="Arial" font-size="10" transform="rotate(-30 539.6,286)">e2e_original</text>
+<rect x="630.1" y="148.9" width="87.2" height="121.1" fill="#55a868"/>
+<text x="673.7" y="142.9" text-anchor="middle" font-family="Arial" font-size="11">0.513</text>
+<text x="673.7" y="286" text-anchor="end" font-family="Arial" font-size="10" transform="rotate(-30 673.7,286)">e2e_masked</text>
+<rect x="764.3" y="45.0" width="87.2" height="225.0" fill="#55a868"/>
+<text x="807.9" y="39.0" text-anchor="middle" font-family="Arial" font-size="11">0.953</text>
+<text x="807.9" y="286" text-anchor="end" font-family="Arial" font-size="10" transform="rotate(-30 807.9,286)">e2e_masked_advanced</text>
+</svg>

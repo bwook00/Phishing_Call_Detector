@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="760" height="360">
+<rect width="100%" height="100%" fill="white"/>
+<text x="380.0" y="25" text-anchor="middle" font-family="Arial" font-size="18" font-weight="700">Length/token sanity check</text>
+<line x1="75" y1="290" x2="735" y2="290" stroke="#333"/>
+<rect x="126.3" y="151.1" width="62.3" height="138.9" fill="#d62728"/>
+<text x="157.1" y="146.1" text-anchor="middle" font-family="Arial" font-size="10">773</text>
+<rect x="199.7" y="45.0" width="62.3" height="245.0" fill="#1f77b4"/>
+<text x="230.5" y="40.0" text-anchor="middle" font-family="Arial" font-size="10">1363</text>
+<text x="185.0" y="308" text-anchor="middle" font-family="Arial" font-size="12">char median</text>
+<rect x="346.3" y="265.9" width="62.3" height="24.1" fill="#d62728"/>
+<text x="377.1" y="260.9" text-anchor="middle" font-family="Arial" font-size="10">134</text>
+<rect x="419.7" y="246.0" width="62.3" height="44.0" fill="#1f77b4"/>
+<text x="450.5" y="241.0" text-anchor="middle" font-family="Arial" font-size="10">245</text>
+<text x="405.0" y="308" text-anchor="middle" font-family="Arial" font-size="12">token median</text>
+<rect x="566.3" y="286.8" width="62.3" height="3.2" fill="#d62728"/>
+<text x="597.1" y="281.8" text-anchor="middle" font-family="Arial" font-size="10">18</text>
+<rect x="639.7" y="286.8" width="62.3" height="3.2" fill="#1f77b4"/>
+<text x="670.5" y="281.8" text-anchor="middle" font-family="Arial" font-size="10">18</text>
+<text x="625.0" y="308" text-anchor="middle" font-family="Arial" font-size="12">line median</text>
+<rect x="580" y="55" width="12" height="12" fill="#d62728"/>
+<text x="598" y="66" font-family="Arial" font-size="12">voicephishing</text>
+<rect x="580" y="75" width="12" height="12" fill="#1f77b4"/>
+<text x="598" y="86" font-family="Arial" font-size="12">bank_call</text>
+</svg>

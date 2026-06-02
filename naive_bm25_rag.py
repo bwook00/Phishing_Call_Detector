@@ -71,8 +71,24 @@ LEGITIMATE_RESOLUTION_PATTERNS: tuple[tuple[re.Pattern[str], str], ...] = (
     (re.compile(r"영업점\s*방문"), "영업점방문"),
     (re.compile(r"내부\s*검토"), "내부검토대기"),
 )
+SCAM_FLOW_PATTERNS: tuple[tuple[re.Pattern[str], str], ...] = (
+    (re.compile(r"(검찰|수사관|형사\d*부|사건번호|전기통신금융사기|명의도용|연루)"), "law_case_pretext"),
+    (re.compile(r"(이상\s*거래|거래.*감지|다른\s*기기|등록정보|기기\s*상태|접속.*감지)"), "account_compromise_pretext"),
+    (re.compile(r"(본인\s*확인|성함|연락처\s*끝자리|주소.*조회|생년)"), "identity_verification_flow"),
+    (re.compile(r"(보호\s*절차|보호\s*안내|자산\s*보호|지급\s*정지|임시\s*제한|제한\s*해제)"), "protective_pretext"),
+    (re.compile(r"(링크|앱\s*설치|인증번호|원격\s*제어)"), "remote_app_or_code_flow"),
+    (re.compile(r"(이체|송금|안전\s*계좌|보호\s*계좌|자산.*이동)"), "transfer_flow"),
+    (re.compile(r"(즉시|급히|통화.*유지|비밀|외부.*말|녹취)"), "urgency_or_isolation"),
+)
 SCAM_SIGNAL_BONUS = 0.5
 LEGITIMATE_SIGNAL_PENALTY = 9.0
+ADVANCED_SHARED_FLOW_BONUS = 9.0
+ADVANCED_SHARED_SCAM_ACTION_BONUS = 14.0
+ADVANCED_CONTEXT_SCAM_ACTION_BONUS = 7.0
+ADVANCED_QUERY_SCAM_ACTION_BONUS = 5.0
+ADVANCED_LEGITIMATE_ACTION_PENALTY = 12.0
+ADVANCED_CONTEXT_LEGITIMATE_ACTION_PENALTY = 4.0
+ADVANCED_LEGITIMATE_WITHOUT_SCAM_PENALTY = 10.0
 OPENAI_MIN_REQUEST_INTERVAL_SECONDS = 6.0
 _LAST_OPENAI_REQUEST_AT = 0.0
 REGION_PREFIXES = (
@@ -145,6 +161,14 @@ def extract_signal_features(text: str) -> dict[str, list[str]]:
     }
 
 
+def extract_scam_flow_features(text: str) -> list[str]:
+    features = []
+    for pattern, canonical in SCAM_FLOW_PATTERNS:
+        if pattern.search(text):
+            features.append(canonical)
+    return list(dict.fromkeys(features))
+
+
 def _format_feature_values(values: list[str]) -> str:
     return ", ".join(values) if values else "none"
 
@@ -179,6 +203,36 @@ def build_retrieval_evidence_summary(query_text: str, retrieved_rows: list[dict[
                 f"  - context {idx} matched legitimate actions: {_format_feature_values(matched_legit)}",
                 f"  - context {idx} context-only scam actions: {_format_feature_values(context_only_scam)}",
                 f"  - context {idx} context-only legitimate actions: {_format_feature_values(context_only_legit)}",
+            ]
+        )
+    return "\n".join(sections)
+
+
+def build_advanced_rag_evidence_summary(query_text: str, retrieved_rows: list[dict[str, Any]]) -> str:
+    query_features = extract_signal_features(query_text)
+    query_flows = set(extract_scam_flow_features(query_text))
+    query_scam_actions = set(query_features["scam_actions"])
+    query_legitimate_actions = set(query_features["legitimate_actions"])
+    sections = [
+        "advanced retrieval evidence summary:",
+        f"- query scam flows: {_format_feature_values(sorted(query_flows))}",
+        f"- query scam actions: {_format_feature_values(query_features['scam_actions'])}",
+        f"- query legitimate actions: {_format_feature_values(query_features['legitimate_actions'])}",
+    ]
+    for idx, row in enumerate(retrieved_rows, start=1):
+        context_text = row["scenario_text"]
+        context_features = extract_signal_features(context_text)
+        context_flows = set(extract_scam_flow_features(context_text))
+        context_scam_actions = set(context_features["scam_actions"])
+        context_legitimate_actions = set(context_features["legitimate_actions"])
+        sections.extend(
+            [
+                f"- context {idx} doc_id: {row.get('doc_id', '') or 'unknown'}",
+                f"  - context {idx} matched scam flows: {_format_feature_values(sorted(query_flows & context_flows))}",
+                f"  - context {idx} matched scam actions: {_format_feature_values(sorted(query_scam_actions & context_scam_actions))}",
+                f"  - context {idx} context-only scam actions: {_format_feature_values(sorted(context_scam_actions - query_scam_actions))}",
+                f"  - context {idx} query legitimate actions: {_format_feature_values(sorted(query_legitimate_actions))}",
+                f"  - context {idx} context legitimate actions: {_format_feature_values(sorted(context_legitimate_actions))}",
             ]
         )
     return "\n".join(sections)
@@ -372,6 +426,7 @@ def build_prompt(
     joined_context = "\n\n".join(context_blocks)
     filtered_joined_context = build_identifier_filtered_context_blocks(scenario_text, retrieved_rows)
     evidence_summary = build_retrieval_evidence_summary(scenario_text, retrieved_rows)
+    advanced_evidence_summary = build_advanced_rag_evidence_summary(scenario_text, retrieved_rows)
     filtered_evidence_summary = build_identifier_filtered_evidence_summary(scenario_text, retrieved_rows)
     if prompt_mode == "evidence":
         return (
@@ -477,6 +532,35 @@ def build_prompt(
             f"{filtered_joined_context}\n\n"
             f"질문:\n{question}"
         )
+    if prompt_mode == "advanced-pattern-flow":
+        return (
+            "너는 masked-corpus 환경의 advanced retrieval-augmented 보이스피싱 판정기다.\n"
+            "이 시스템은 개인정보 식별자 대신 보이스피싱 구조적 패턴과 사기 실행 행동을 근거로 판단한다.\n"
+            "질문 대상 대화만 보고 답하지 말고, advanced retrieval evidence summary와 context를 함께 비교하라.\n"
+            "yes 조건:\n"
+            "- query와 context가 보호 절차/본인확인/이상거래/수사 사칭 같은 scam flow를 공유한다.\n"
+            "- 또는 context가 링크 접속, 앱 설치, 인증번호 제공, 원격 제어, 송금 유도 같은 later scam action을 강하게 보여준다.\n"
+            "no 조건:\n"
+            "- query가 공식 앱 확인, 대표번호 재통화, 영업점 방문, 내부 검토 대기 같은 정상 해결 경로를 더 강하게 보인다.\n"
+            "- retrieval이 generic banking similarity만 보여주고 scam flow/action support가 부족하다.\n"
+            "개인정보 식별자 overlap이 없어도 구조적 scam flow와 later scam action support가 강하면 yes를 줄 수 있다.\n"
+            "설명하지 말고 yes 또는 no만 출력하라.\n\n"
+            f"{advanced_evidence_summary}\n\n"
+            f"질문 대상 대화:\n{scenario_text}\n\n"
+            f"{joined_context}\n\n"
+            f"질문:\n{question}"
+        )
+    if prompt_mode == "advanced-pattern-summary":
+        return (
+            "너는 masked-corpus 환경의 advanced retrieval-augmented 보이스피싱 판정기다.\n"
+            "개인정보 식별자 대신 advanced retrieval evidence summary의 구조적 패턴과 사기 실행 행동만 근거로 판단하라.\n"
+            "yes: scam flow overlap 또는 later scam action support가 강한 경우.\n"
+            "no: 정상 해결 경로가 강하거나 generic banking similarity만 있는 경우.\n"
+            "설명하지 말고 yes 또는 no만 출력하라.\n\n"
+            f"{advanced_evidence_summary}\n\n"
+            f"질문 대상 대화:\n{scenario_text}\n\n"
+            f"질문:\n{question}"
+        )
     return (
         "질문 대상 대화와 검색 결과를 함께 보고 판단하라.\n"
         "질문 대상 대화가 검색 결과와 70% 이상 유사할 때만 yes라고 답하라.\n"
@@ -563,6 +647,71 @@ def compute_threshold_score(query_text: str, hits: list[dict[str, Any]]) -> tupl
     return final_score, f"bm25:{top_score:.6f}|adj:{adjustment:.6f}|score:{final_score:.6f}"
 
 
+def compute_advanced_rag_score(query_text: str, hits: list[dict[str, Any]]) -> tuple[float, str]:
+    if not hits:
+        return 0.0, "advanced:bm25:0.000000|score:0.000000"
+
+    top_hit = hits[0]
+    base_score = float(top_hit["score"])
+    context_text = top_hit["doc"].get("scenario_text", "")
+    query_features = extract_signal_features(query_text)
+    context_features = extract_signal_features(context_text)
+    query_flows = set(extract_scam_flow_features(query_text))
+    context_flows = set(extract_scam_flow_features(context_text))
+    shared_flows = sorted(query_flows & context_flows)
+    query_scam_actions = set(query_features["scam_actions"])
+    context_scam_actions = set(context_features["scam_actions"])
+    shared_scam_actions = sorted(query_scam_actions & context_scam_actions)
+    context_only_scam_actions = sorted(context_scam_actions - query_scam_actions)
+    query_legitimate_actions = set(query_features["legitimate_actions"])
+    context_legitimate_actions = set(context_features["legitimate_actions"])
+
+    shared_flow_bonus = ADVANCED_SHARED_FLOW_BONUS * len(shared_flows)
+    shared_scam_bonus = ADVANCED_SHARED_SCAM_ACTION_BONUS * len(shared_scam_actions)
+    context_scam_bonus = ADVANCED_CONTEXT_SCAM_ACTION_BONUS * len(context_only_scam_actions)
+    query_scam_bonus = ADVANCED_QUERY_SCAM_ACTION_BONUS * len(query_scam_actions)
+    legit_penalty = ADVANCED_LEGITIMATE_ACTION_PENALTY * len(query_legitimate_actions)
+    context_legit_penalty = ADVANCED_CONTEXT_LEGITIMATE_ACTION_PENALTY * len(context_legitimate_actions)
+    if query_legitimate_actions and not query_scam_actions:
+        legit_penalty += ADVANCED_LEGITIMATE_WITHOUT_SCAM_PENALTY
+
+    final_score = (
+        base_score
+        + shared_flow_bonus
+        + shared_scam_bonus
+        + context_scam_bonus
+        + query_scam_bonus
+        - legit_penalty
+        - context_legit_penalty
+    )
+    raw = (
+        f"advanced:bm25:{base_score:.6f}"
+        f"|shared_flows:{','.join(shared_flows) or 'none'}"
+        f"|shared_flow_bonus:{shared_flow_bonus:.6f}"
+        f"|shared_scam_actions:{','.join(shared_scam_actions) or 'none'}"
+        f"|shared_scam_bonus:{shared_scam_bonus:.6f}"
+        f"|context_scam_bonus:{context_scam_bonus:.6f}"
+        f"|query_scam_bonus:{query_scam_bonus:.6f}"
+        f"|legit_penalty:{legit_penalty:.6f}"
+        f"|context_legit_penalty:{context_legit_penalty:.6f}"
+        f"|score:{final_score:.6f}"
+    )
+    return final_score, raw
+
+
+def rerank_hits_with_advanced_rag(query_text: str, hits: list[dict[str, Any]], top_k: int) -> list[dict[str, Any]]:
+    reranked = []
+    for hit in hits:
+        score, raw = compute_advanced_rag_score(query_text, [hit])
+        reranked_hit = dict(hit)
+        reranked_hit["bm25_score"] = float(hit["score"])
+        reranked_hit["score"] = score
+        reranked_hit["advanced_raw"] = raw
+        reranked.append(reranked_hit)
+    reranked.sort(key=lambda item: item["score"], reverse=True)
+    return reranked[:top_k]
+
+
 def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     argv = list(sys.argv[1:] if argv is None else argv)
     commands = {
@@ -595,7 +744,13 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         choices=["custom", "realistic", "strict"],
         default="custom",
     )
-    eval_parser.add_argument("--decision-mode", choices=["llm", "bm25-threshold"], default="llm")
+    eval_parser.add_argument("--decision-mode", choices=["llm", "bm25-threshold", "advanced-rag-threshold"], default="llm")
+    eval_parser.add_argument("--advanced-candidate-k", type=int, default=25)
+    eval_parser.add_argument(
+        "--retrieval-rerank",
+        choices=["none", "advanced-rag"],
+        default="none",
+    )
     eval_parser.add_argument(
         "--prompt-mode",
         choices=[
@@ -606,6 +761,8 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
             "retrieval-anchor-flow",
             "summary-gated",
             "identifier-filtered-flow",
+            "advanced-pattern-flow",
+            "advanced-pattern-summary",
         ],
         default="similarity",
     )
@@ -924,6 +1081,8 @@ def evaluate(
     decision_mode: str = "llm",
     prompt_mode: str = "similarity",
     yes_threshold: float = 0.0,
+    advanced_candidate_k: int = 25,
+    retrieval_rerank: str = "none",
 ) -> list[dict[str, str]]:
     corpus_rows = corpus_rows_to_indexable(read_csv_rows(corpus_path))
     qa_rows = read_csv_rows(qa_path)
@@ -944,13 +1103,17 @@ def evaluate(
         if row["qa_id"] in completed_ids:
             continue
         hits = index.search(build_query_text(row), top_k=len(corpus_rows))
+        use_advanced_rerank = decision_mode == "advanced-rag-threshold" or retrieval_rerank == "advanced-rag"
+        candidate_top_k = advanced_candidate_k if use_advanced_rerank else top_k
         hits = filter_retrieval_hits(
             hits,
             source_sample_id=row["source_sample_id"],
             exclude_same_sample=exclude_same_sample,
             exclude_same_pattern=exclude_same_pattern,
-            top_k=top_k,
+            top_k=candidate_top_k,
         )
+        if use_advanced_rerank:
+            hits = rerank_hits_with_advanced_rag(row["scenario_text"], hits, top_k=top_k)
         retrieval_metadata = build_retrieval_metadata(
             hits,
             source_sample_id=row["source_sample_id"],
@@ -967,6 +1130,9 @@ def evaluate(
             raw_output = ""
         elif decision_mode == "bm25-threshold":
             final_score, raw_output = compute_threshold_score(row["scenario_text"], hits)
+            prediction = "yes" if final_score >= yes_threshold else "no"
+        elif decision_mode == "advanced-rag-threshold":
+            final_score, raw_output = compute_advanced_rag_score(row["scenario_text"], hits)
             prediction = "yes" if final_score >= yes_threshold else "no"
         else:
             if not model:
@@ -1034,6 +1200,8 @@ def main(argv: list[str] | None = None) -> int:
             decision_mode=args.decision_mode,
             prompt_mode=args.prompt_mode,
             yes_threshold=args.yes_threshold,
+            advanced_candidate_k=args.advanced_candidate_k,
+            retrieval_rerank=args.retrieval_rerank,
         )
         if not rows and Path(output_path).exists():
             rows = read_csv_rows(output_path)

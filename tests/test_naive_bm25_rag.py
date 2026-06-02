@@ -12,12 +12,15 @@ from naive_bm25_rag import (
     build_message_batch_requests,
     build_retrieval_metadata,
     build_retrieval_evidence_summary,
+    build_advanced_rag_evidence_summary,
     corpus_rows_to_indexable,
+    compute_advanced_rag_score,
     compute_threshold_score,
     build_search_text,
     build_prompt,
     extract_signal_features,
     filter_retrieval_hits,
+    rerank_hits_with_advanced_rag,
     is_openai_model,
     load_anthropic_api_key,
     load_openai_api_key,
@@ -232,6 +235,101 @@ def test_identifier_filtered_flow_returns_policy_no_prompt_when_all_contexts_fil
     assert "설명하지 말고 no만 출력하라." in prompt
 
 
+def test_build_prompt_supports_advanced_pattern_flow_mode():
+    retrieved_rows = [
+        {
+            "doc_id": "P07-01",
+            "scenario_text": "보호 절차 이후 링크 접속과 앱 설치를 유도하고 인증번호 제공을 요구합니다.",
+        }
+    ]
+
+    prompt = build_prompt(
+        question="이 텍스트는 보이스피싱으로 판단해야 하는가? yes or no로 답하라.",
+        scenario_text="이상거래 보호 절차라며 앱 설치를 요구했습니다.",
+        retrieved_rows=retrieved_rows,
+        prompt_mode="advanced-pattern-flow",
+    )
+
+    assert "advanced retrieval evidence summary" in prompt
+    assert "개인정보 식별자 대신" in prompt
+    assert "later scam action" in prompt
+
+
+def test_advanced_rag_evidence_summary_includes_flow_matches():
+    summary = build_advanced_rag_evidence_summary(
+        "이상거래 보호 절차라며 앱 설치를 요구했습니다.",
+        [
+            {
+                "doc_id": "P07-01",
+                "scenario_text": "보호 절차 이후 링크 접속과 앱 설치를 유도합니다.",
+            }
+        ],
+    )
+
+    assert "matched scam flows" in summary
+    assert "matched scam actions" in summary
+
+
+
+def test_advanced_rag_score_rewards_shared_flow_and_scam_actions():
+    hits = [
+        {
+            "doc": {
+                "doc_id": "P07-01",
+                "scenario_text": "보호 절차로 안내한 뒤 링크 접속과 앱 설치를 유도하고 인증번호 제공을 요구합니다.",
+            },
+            "score": 40.0,
+        }
+    ]
+
+    score, raw = compute_advanced_rag_score(
+        "이상거래 보호 절차라며 링크 접속 후 앱 설치를 요구했습니다.",
+        hits,
+    )
+
+    assert score > 60.0
+    assert "advanced:" in raw
+    assert "shared_scam_actions" in raw
+
+
+def test_advanced_rag_score_penalizes_legitimate_resolution_flow():
+    hits = [
+        {
+            "doc": {
+                "doc_id": "P07-01",
+                "scenario_text": "링크 접속과 앱 설치를 유도합니다.",
+            },
+            "score": 65.0,
+        }
+    ]
+
+    score, raw = compute_advanced_rag_score(
+        "공식 앱에서 직접 확인하고 대표번호로 다시 걸어 영업점 방문을 안내했습니다.",
+        hits,
+    )
+
+    assert score < 50.0
+    assert "legit_penalty" in raw
+
+
+def test_rerank_hits_with_advanced_rag_promotes_pattern_supported_context():
+    hits = [
+        {
+            "doc": {"doc_id": "D1", "scenario_text": "일반적인 계좌 확인 안내입니다."},
+            "score": 55.0,
+        },
+        {
+            "doc": {"doc_id": "D2", "scenario_text": "보호 절차 이후 앱 설치와 인증번호 제공을 요구합니다."},
+            "score": 45.0,
+        },
+    ]
+
+    reranked = rerank_hits_with_advanced_rag("보호 절차라며 앱 설치를 요구했습니다.", hits, top_k=1)
+
+    assert reranked[0]["doc"]["doc_id"] == "D2"
+    assert reranked[0]["score"] > 45.0
+
+
 def test_parse_args_uses_expected_defaults():
     args = parse_args(
         [
@@ -281,6 +379,25 @@ def test_parse_args_supports_threshold_decision_mode():
 
     assert args.decision_mode == "bm25-threshold"
     assert args.yes_threshold == 12.5
+
+
+
+def test_parse_args_supports_advanced_rag_threshold_decision_mode():
+    args = parse_args(
+        [
+            "--corpus",
+            "data/voicephishing_corpus_masked_strong_v2.csv",
+            "--qa",
+            "data/reinforced_v5_binary_qa_67.csv",
+            "--decision-mode",
+            "advanced-rag-threshold",
+            "--advanced-candidate-k",
+            "25",
+        ]
+    )
+
+    assert args.decision_mode == "advanced-rag-threshold"
+    assert args.advanced_candidate_k == 25
 
 
 def test_parse_args_supports_retrieval_regime():
@@ -386,6 +503,24 @@ def test_parse_args_supports_identifier_filtered_flow_prompt_mode():
     )
 
     assert args.prompt_mode == "identifier-filtered-flow"
+
+
+def test_parse_args_supports_advanced_pattern_flow_prompt_and_rerank_mode():
+    args = parse_args(
+        [
+            "--corpus",
+            "data/voicephishing_corpus_masked_strong_v2.csv",
+            "--qa",
+            "data/reinforced_v5_binary_qa_67.csv",
+            "--prompt-mode",
+            "advanced-pattern-flow",
+            "--retrieval-rerank",
+            "advanced-rag",
+        ]
+    )
+
+    assert args.prompt_mode == "advanced-pattern-flow"
+    assert args.retrieval_rerank == "advanced-rag"
 
 
 

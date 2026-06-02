@@ -1,0 +1,13 @@
+pipeline,source_type,count,score_mean,score_median,score_q25,score_q75,accuracy,yes_pred_ratio
+retrieval_original_naive,bank_call,500,44.8895,45.4151,36.6529,51.5998,0.938,0.062
+retrieval_original_naive,voicephishing,500,69.3595,69.0807,59.8889,75.3356,0.704,0.704
+retrieval_masked_naive,bank_call,500,38.1506,37.7712,29.6486,44.2889,0.938,0.062
+retrieval_masked_naive,voicephishing,500,52.6347,52.8176,43.0706,56.5491,0.144,0.144
+retrieval_masked_advanced,bank_call,500,38.0952,33.7502,21.8645,46.7881,0.938,0.062
+retrieval_masked_advanced,voicephishing,500,122.0833,124.0004,98.1277,139.1923,0.884,0.884
+e2e_original,bank_call,500,86.5495,88.5362,78.259,95.6122,0.888,0.112
+e2e_original,voicephishing,500,69.6135,69.2584,59.8889,77.8739,0.9,0.9
+e2e_masked,bank_call,500,79.8106,79.7349,69.8645,89.2889,0.82,0.18
+e2e_masked,voicephishing,500,52.8887,52.8176,44.729,56.4536,0.206,0.206
+e2e_masked_advanced,bank_call,500,58.4092,56.9979,45.8645,68.7881,0.962,0.038
+e2e_masked_advanced,voicephishing,500,86.2473,83.4536,64.4344,96.7669,0.944,0.944

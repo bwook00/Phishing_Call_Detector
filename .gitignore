@@ -6,3 +6,23 @@ __pycache__/
 .pytest_cache/
 .omx/
 .DS_Store
+
+# Local / intermediate experiment artifacts
+*_batch_*.json
+*_batch_*.jsonl
+*_batch_meta*.json
+*_batch_status*.json
+data/e2e335_*.csv
+data/e2e500_*.csv
+data/e2e_extra500_*.csv
+data/expanded500_*.csv
+data/expanded_hard_binary_qa_335.csv
+data/expanded_hard_binary_qa_500.csv
+data/expanded_hard_binary_qa_extra500.csv
+data/expanded_hard_masked_advanced_rag_threshold_results.csv
+data/expanded_hard_masked_naive_threshold_results.csv
+data/expanded_hard_original_naive_threshold_results.csv
+data/final_*.csv
+data/full3000_*.csv
+data/e2e335_*_now.json
+data/e2e335_*_now.jsonl

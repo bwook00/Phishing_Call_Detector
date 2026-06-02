@@ -1,0 +1,7 @@
+pipeline,count,accuracy,voicephishing_accuracy,bank_call_accuracy,yes_pred_ratio
+retrieval_original_naive,1000,0.821,0.704,0.938,0.383
+retrieval_masked_naive,1000,0.541,0.144,0.938,0.103
+retrieval_masked_advanced,1000,0.911,0.884,0.938,0.473
+e2e_original,1000,0.894,0.9,0.888,0.506
+e2e_masked,1000,0.513,0.206,0.82,0.193
+e2e_masked_advanced,1000,0.953,0.944,0.962,0.491
