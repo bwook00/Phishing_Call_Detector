@@ -1,0 +1,709 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Live Call Simulation · Masked RAG Voicephishing Detector</title>
+  <style>
+    :root {
+      --bg: #07111f;
+      --panel: rgba(15, 23, 42, 0.88);
+      --panel-2: rgba(30, 41, 59, 0.78);
+      --line: rgba(148, 163, 184, 0.24);
+      --text: #e5edf7;
+      --muted: #94a3b8;
+      --blue: #60a5fa;
+      --cyan: #22d3ee;
+      --red: #fb7185;
+      --green: #34d399;
+      --yellow: #fbbf24;
+      --purple: #a78bfa;
+      --shadow: 0 24px 80px rgba(0, 0, 0, 0.42);
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans KR", sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at 15% 10%, rgba(37, 99, 235, 0.32), transparent 35%),
+        radial-gradient(circle at 80% 0%, rgba(14, 165, 233, 0.26), transparent 32%),
+        radial-gradient(circle at 55% 90%, rgba(16, 185, 129, 0.16), transparent 38%),
+        var(--bg);
+      overflow-x: hidden;
+    }
+
+    .app {
+      width: min(1440px, calc(100vw - 44px));
+      margin: 0 auto;
+      padding: 26px 0 34px;
+    }
+
+    header {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 20px;
+      align-items: center;
+      margin-bottom: 18px;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(28px, 3vw, 44px);
+      line-height: 1.05;
+      letter-spacing: -0.04em;
+    }
+
+    .subtitle {
+      margin-top: 10px;
+      color: var(--muted);
+      font-size: 15px;
+      line-height: 1.55;
+    }
+
+    .simulation-banner {
+      display: inline-flex;
+      margin-top: 12px;
+      padding: 10px 13px;
+      border-radius: 14px;
+      border: 1px solid rgba(251, 191, 36, 0.42);
+      background: rgba(251, 191, 36, 0.11);
+      color: #fde68a;
+      font-size: 13px;
+      font-weight: 800;
+      letter-spacing: -0.01em;
+    }
+
+    .scope-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      border: 1px solid rgba(96, 165, 250, 0.55);
+      background: rgba(37, 99, 235, 0.16);
+      color: #bfdbfe;
+      padding: 9px 12px;
+      border-radius: 999px;
+      font-size: 13px;
+      white-space: nowrap;
+      box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.07);
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: 0.93fr 1.07fr;
+      gap: 18px;
+      align-items: stretch;
+    }
+
+    .phone, .detector, .bench, .explain {
+      border: 1px solid var(--line);
+      background: linear-gradient(180deg, rgba(15, 23, 42, 0.92), rgba(15, 23, 42, 0.74));
+      border-radius: 28px;
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(16px);
+    }
+
+    .phone {
+      padding: 20px;
+      min-height: 720px;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .call-top {
+      display: flex;
+      justify-content: space-between;
+      gap: 14px;
+      align-items: center;
+      padding: 14px;
+      border-radius: 22px;
+      background: rgba(2, 6, 23, 0.42);
+      border: 1px solid rgba(148, 163, 184, 0.18);
+      margin-bottom: 14px;
+    }
+
+    .caller { display: flex; align-items: center; gap: 12px; }
+    .avatar {
+      width: 48px; height: 48px; border-radius: 50%;
+      display: grid; place-items: center;
+      background: linear-gradient(135deg, #1d4ed8, #06b6d4);
+      font-size: 22px;
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,0.25);
+    }
+    .caller b { display: block; font-size: 16px; }
+    .caller span { display: block; margin-top: 3px; font-size: 12px; color: var(--muted); }
+    .timer {
+      font-variant-numeric: tabular-nums;
+      font-size: 22px;
+      font-weight: 800;
+      letter-spacing: 0.02em;
+      color: #dbeafe;
+    }
+
+    .scenario-tabs {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+    button {
+      border: 0;
+      cursor: pointer;
+      color: var(--text);
+      font: inherit;
+    }
+    .tab, .control {
+      padding: 11px 13px;
+      border-radius: 16px;
+      background: rgba(30, 41, 59, 0.72);
+      border: 1px solid rgba(148, 163, 184, 0.18);
+      transition: 160ms ease;
+    }
+    .tab.active.phish { background: rgba(244, 63, 94, 0.22); border-color: rgba(251, 113, 133, 0.55); }
+    .tab.active.bank { background: rgba(16, 185, 129, 0.2); border-color: rgba(52, 211, 153, 0.52); }
+    .tab small { display: block; color: var(--muted); margin-top: 3px; }
+
+    .controls { display: grid; grid-template-columns: 1.1fr 0.9fr; gap: 8px; margin-bottom: 14px; }
+    .control.primary {
+      background: linear-gradient(135deg, #2563eb, #0891b2);
+      font-weight: 800;
+    }
+    .control.secondary { color: #cbd5e1; }
+    .control:hover, .tab:hover { transform: translateY(-1px); filter: brightness(1.08); }
+
+    .transcript {
+      flex: 1;
+      overflow: hidden;
+      padding: 16px;
+      border-radius: 22px;
+      background: rgba(2, 6, 23, 0.38);
+      border: 1px solid rgba(148, 163, 184, 0.16);
+      position: relative;
+    }
+    .stream-label {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      color: #cbd5e1;
+      font-size: 12px;
+      margin-bottom: 12px;
+    }
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      border-radius: 999px;
+      padding: 5px 8px;
+      border: 1px solid rgba(148, 163, 184, 0.2);
+      background: rgba(15, 23, 42, 0.72);
+      color: #cbd5e1;
+      font-size: 12px;
+    }
+    .dot {
+      width: 7px; height: 7px; border-radius: 50%; background: var(--green);
+      box-shadow: 0 0 16px var(--green);
+    }
+
+    .message-list { display: flex; flex-direction: column; gap: 10px; }
+    .msg {
+      opacity: 0;
+      transform: translateY(12px);
+      animation: pop 360ms ease forwards;
+      max-width: 92%;
+      padding: 11px 13px;
+      border-radius: 17px;
+      line-height: 1.48;
+      font-size: 14px;
+      border: 1px solid rgba(148, 163, 184, 0.14);
+    }
+    .msg.agent {
+      align-self: flex-start;
+      background: rgba(30, 41, 59, 0.92);
+    }
+    .msg.victim, .msg.customer {
+      align-self: flex-end;
+      background: rgba(37, 99, 235, 0.22);
+      border-color: rgba(96, 165, 250, 0.24);
+    }
+    .msg b { color: #e0f2fe; }
+    @keyframes pop { to { opacity: 1; transform: translateY(0); } }
+
+    .right-col { display: grid; gap: 14px; }
+    .detector { padding: 20px; }
+    .detector-head {
+      display: flex; justify-content: space-between; gap: 14px; align-items: flex-start;
+      margin-bottom: 16px;
+    }
+    .detector-head h2 { margin: 0; font-size: 22px; letter-spacing: -0.03em; }
+    .status {
+      min-width: 188px;
+      text-align: center;
+      border-radius: 18px;
+      padding: 12px;
+      border: 1px solid rgba(148, 163, 184, 0.22);
+      background: rgba(30, 41, 59, 0.76);
+    }
+    .status .label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.12em; }
+    .status .value { margin-top: 4px; font-size: 20px; font-weight: 900; }
+    .status.monitor .value { color: var(--blue); }
+    .status.suspicious .value { color: var(--yellow); }
+    .status.detected { background: rgba(127, 29, 29, 0.44); border-color: rgba(251, 113, 133, 0.45); }
+    .status.detected .value { color: var(--red); }
+    .status.safe { background: rgba(6, 78, 59, 0.36); border-color: rgba(52, 211, 153, 0.38); }
+    .status.safe .value { color: var(--green); }
+
+    .cards {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      margin-bottom: 16px;
+    }
+    .card {
+      min-height: 138px;
+      padding: 13px;
+      border-radius: 20px;
+      border: 1px solid rgba(148, 163, 184, 0.2);
+      background: rgba(2, 6, 23, 0.35);
+      position: relative;
+      overflow: hidden;
+    }
+    .card::before {
+      content: ""; position: absolute; inset: 0 0 auto; height: 3px; background: rgba(148, 163, 184, 0.35);
+    }
+    .card.original::before { background: var(--blue); }
+    .card.masked::before { background: var(--red); }
+    .card.advanced::before { background: var(--green); }
+    .card-title { color: #cbd5e1; font-size: 12px; font-weight: 700; }
+    .result { margin-top: 9px; font-size: 28px; font-weight: 950; letter-spacing: -0.04em; }
+    .result.yes { color: var(--red); }
+    .result.no { color: var(--green); }
+    .result.uncertain { color: var(--yellow); font-size: 21px; }
+    .score { margin-top: 5px; color: var(--muted); font-size: 12px; }
+    .bar { margin-top: 10px; height: 7px; border-radius: 999px; background: rgba(148, 163, 184, 0.18); overflow: hidden; }
+    .bar > div { height: 100%; width: 0%; border-radius: inherit; transition: width 420ms ease; }
+    .original .bar > div { background: var(--blue); }
+    .masked .bar > div { background: var(--red); }
+    .advanced .bar > div { background: var(--green); }
+    .evidence { margin-top: 9px; color: #cbd5e1; font-size: 11px; line-height: 1.42; }
+
+    .chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin: 10px 0 16px;
+    }
+    .chip {
+      border-radius: 999px;
+      padding: 8px 10px;
+      border: 1px solid rgba(148, 163, 184, 0.18);
+      background: rgba(30, 41, 59, 0.55);
+      color: #94a3b8;
+      font-size: 12px;
+      transition: 260ms ease;
+    }
+    .chip.active.risk { background: rgba(244, 63, 94, 0.2); color: #fecdd3; border-color: rgba(251, 113, 133, 0.48); box-shadow: 0 0 22px rgba(244,63,94,0.12); }
+    .chip.active.safe { background: rgba(16, 185, 129, 0.18); color: #bbf7d0; border-color: rgba(52, 211, 153, 0.44); box-shadow: 0 0 22px rgba(16,185,129,0.1); }
+
+    .summary {
+      padding: 15px;
+      border-radius: 20px;
+      background: rgba(15, 23, 42, 0.66);
+      border: 1px solid rgba(148, 163, 184, 0.18);
+      min-height: 104px;
+    }
+    .summary b { color: #f8fafc; }
+    .summary p { margin: 7px 0 0; color: #cbd5e1; line-height: 1.55; font-size: 14px; }
+
+    .bench { padding: 16px 18px; }
+    .bench h3, .explain h3 { margin: 0 0 10px; font-size: 16px; }
+    .metric-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+    .metric {
+      border-radius: 16px;
+      padding: 12px;
+      background: rgba(2, 6, 23, 0.34);
+      border: 1px solid rgba(148, 163, 184, 0.16);
+    }
+    .metric .name { color: var(--muted); font-size: 11px; }
+    .metric .num { margin-top: 5px; font-weight: 950; font-size: 24px; }
+    .metric.red .num { color: var(--red); }
+    .metric.green .num { color: var(--green); }
+    .metric.blue .num { color: var(--blue); }
+    .bench-row { margin-top: 9px; color: #cbd5e1; font-size: 12px; }
+    .precomputed-note {
+      display: inline-flex;
+      margin: -2px 0 10px;
+      padding: 6px 9px;
+      border-radius: 999px;
+      background: rgba(251, 191, 36, 0.1);
+      border: 1px solid rgba(251, 191, 36, 0.26);
+      color: #fde68a;
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .explain { padding: 16px 18px; }
+    .explain p { color: #cbd5e1; line-height: 1.58; margin: 0; font-size: 13px; }
+
+    .disclaimer {
+      margin-top: 16px;
+      padding: 12px 14px;
+      border-radius: 18px;
+      border: 1px solid rgba(251, 191, 36, 0.32);
+      background: rgba(251, 191, 36, 0.09);
+      color: #fde68a;
+      line-height: 1.55;
+      font-size: 13px;
+    }
+
+    @media (max-width: 1080px) {
+      .layout { grid-template-columns: 1fr; }
+      .phone { min-height: 620px; }
+    }
+    @media (max-width: 720px) {
+      .app { width: min(100vw - 20px, 1440px); padding-top: 14px; }
+      header { grid-template-columns: 1fr; }
+      .simulation-banner {
+      display: inline-flex;
+      margin-top: 12px;
+      padding: 10px 13px;
+      border-radius: 14px;
+      border: 1px solid rgba(251, 191, 36, 0.42);
+      background: rgba(251, 191, 36, 0.11);
+      color: #fde68a;
+      font-size: 13px;
+      font-weight: 800;
+      letter-spacing: -0.01em;
+    }
+
+    .scope-badge { white-space: normal; }
+      .cards, .metric-grid { grid-template-columns: 1fr; }
+      .controls, .scenario-tabs { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header>
+      <div>
+        <h1>Live Call Simulation<br/>Masked RAG Voicephishing Detector</h1>
+        <div class="subtitle">전화 통화 중 transcript가 들어오는 상황을 가정하고, 개인정보 마스킹 환경에서 RAG 탐지 결과가 어떻게 변하는지 보여주는 데모입니다.</div>
+        <div class="simulation-banner">PRECOMPUTED SIMULATION ONLY · 실제 음성 인식/실시간 LLM 추론이 아니라, 최종 실험 결과를 설명하기 위한 영상용 prototype입니다.</div>
+      </div>
+      <div class="scope-badge"><span class="dot"></span> Simulated transcript feed after STT · No real STT / No microphone</div>
+    </header>
+
+    <div class="layout">
+      <section class="phone">
+        <div class="call-top">
+          <div class="caller">
+            <div class="avatar">☎</div>
+            <div>
+              <b id="callerName">금융보호지원센터</b>
+              <span id="callerMeta">Incoming call · transcript stream simulation</span>
+            </div>
+          </div>
+          <div class="timer" id="timer">00:00</div>
+        </div>
+
+        <div class="scenario-tabs">
+          <button class="tab active phish" id="tabPhish" onclick="selectScenario('phishing')">Voicephishing call<small>YES detection path</small></button>
+          <button class="tab bank" id="tabBank" onclick="selectScenario('bank')">Normal bank call<small>NO guard path</small></button>
+        </div>
+
+        <div class="controls">
+          <button class="control primary" onclick="startSimulation()">▶ Start simulated call</button>
+          <button class="control secondary" onclick="resetSimulation()">↻ Reset</button>
+        </div>
+
+        <div class="transcript">
+          <div class="stream-label">
+            <span class="pill"><span class="dot"></span> Transcript chunks</span>
+            <span class="pill">STT output assumed · RAG scope only</span>
+          </div>
+          <div class="message-list" id="messages"></div>
+        </div>
+      </section>
+
+      <section class="right-col">
+        <div class="detector">
+          <div class="detector-head">
+            <div>
+              <h2>RAG Detection Panel</h2>
+              <div class="subtitle">Precomputed demo case · final benchmark evidence shown below</div>
+            </div>
+            <div class="status monitor" id="statusBox">
+              <div class="label">Current state</div>
+              <div class="value" id="statusText">Monitoring</div>
+            </div>
+          </div>
+
+          <div class="cards">
+            <div class="card original">
+              <div class="card-title">Original RAG</div>
+              <div class="result uncertain" id="originalResult">WAIT</div>
+              <div class="score" id="originalScore">score: --</div>
+              <div class="bar"><div id="originalBar"></div></div>
+              <div class="evidence" id="originalEvidence">개인정보가 유지된 corpus 기준</div>
+            </div>
+            <div class="card masked">
+              <div class="card-title">Masked RAG</div>
+              <div class="result uncertain" id="maskedResult">WAIT</div>
+              <div class="score" id="maskedScore">score: --</div>
+              <div class="bar"><div id="maskedBar"></div></div>
+              <div class="evidence" id="maskedEvidence">마스킹 후 검색 연결 단서 약화</div>
+            </div>
+            <div class="card advanced">
+              <div class="card-title">Masked Advanced RAG</div>
+              <div class="result uncertain" id="advancedResult">WAIT</div>
+              <div class="score" id="advancedScore">score: --</div>
+              <div class="bar"><div id="advancedBar"></div></div>
+              <div class="evidence" id="advancedEvidence">구조적 패턴과 정상상담 guard 활용</div>
+            </div>
+          </div>
+
+          <div class="chips" id="chips"></div>
+          <div class="summary" id="summary">
+            <b>Demo ready.</b>
+            <p>Start 버튼을 누르면 transcript가 한 줄씩 나타나고, 탐지 패널이 단계적으로 업데이트됩니다.</p>
+          </div>
+        </div>
+
+        <div class="bench">
+          <h3>Final 1000-row Benchmark</h3>
+          <div class="precomputed-note">Precomputed evaluation summary · not live inference during this demo</div>
+          <div class="metric-grid">
+            <div class="metric blue"><div class="name">Original RAG · e2e</div><div class="num">0.8940</div></div>
+            <div class="metric red"><div class="name">Masked RAG · e2e</div><div class="num">0.5130</div></div>
+            <div class="metric green"><div class="name">Masked Advanced · e2e</div><div class="num">0.9530</div></div>
+          </div>
+          <div class="bench-row">Retrieval-only: Original 0.8210 · Masked 0.5410 · Masked Advanced 0.9110</div>
+        </div>
+
+        <div class="explain">
+          <h3>Scope note</h3>
+          <p>본 데모는 STT 이후 transcript가 실시간으로 들어오는 상황을 가정한 simulation입니다. 본 프로젝트의 범위는 음성 인식이 아니라, transcript 기반 RAG 탐지와 개인정보 마스킹 환경의 성능 비교입니다.</p>
+        </div>
+      </section>
+    </div>
+
+    <div class="disclaimer">
+      <b>Important:</b> This is not real speech recognition and does not access the microphone. It is a deterministic, precomputed browser demo for explaining the final RAG experiment.
+    </div>
+  </div>
+
+  <script>
+    const benchmark = {
+      retrieval: { original: 0.8210, masked: 0.5410, advanced: 0.9110 },
+      e2e: { original: 0.8940, masked: 0.5130, advanced: 0.9530 }
+    };
+
+    const scenarios = {
+      phishing: {
+        callerName: '금융보호지원센터',
+        callerMeta: 'Unknown caller · high-risk transcript simulation',
+        finalState: 'Voicephishing Detected',
+        finalClass: 'detected',
+        messages: [
+          { speaker: '상담원', role: 'agent', text: '금융보호지원센터 이상거래 확인팀입니다. 김하늘 고객님 본인 맞으신가요?', chips: [], state: 'Monitoring', scores: [42, 28, 36] },
+          { speaker: '고객', role: 'victim', text: '네, 맞는데요. 갑자기 무슨 일인가요?', chips: [], state: 'Monitoring', scores: [48, 30, 42] },
+          { speaker: '상담원', role: 'agent', text: '국민은행과 카카오뱅크에 보안 점검 이력이 남아 있습니다. 지금 바로 보호 절차를 진행해야 합니다.', chips: ['urgency'], state: 'Suspicious', scores: [61, 38, 58] },
+          { speaker: '고객', role: 'victim', text: '제가 한 건 아닌데, 은행 대표번호로 다시 확인해도 되나요?', chips: ['repAvoid'], state: 'Suspicious', scores: [66, 43, 70] },
+          { speaker: '상담원', role: 'agent', text: '지금 통화를 끊으면 지급정지가 지연됩니다. 전용 페이지 링크로 접속해서 보호 모듈을 설치해 주세요.', chips: ['appInstall', 'procedureBypass'], state: 'Suspicious', scores: [76, 49, 86] },
+          { speaker: '상담원', role: 'agent', text: '설치 후 표시되는 6자리 인증번호를 불러주시면 계정 보호가 완료됩니다.', chips: ['codeRequest'], state: 'Voicephishing Detected', scores: [90, 52, 96] }
+        ],
+        chips: [
+          ['appInstall', '앱/링크 설치 요구', 'risk'],
+          ['codeRequest', '인증번호 요구', 'risk'],
+          ['urgency', '긴급성 압박', 'risk'],
+          ['procedureBypass', '정상 절차 우회', 'risk'],
+          ['repAvoid', '대표번호 확인 회피', 'risk']
+        ],
+        final: {
+          original: ['YES', 0.900, '원본 corpus에서는 은행명/이상거래/인증번호 단서가 강하게 연결됨'],
+          masked: ['NO', 0.206, '식별 단서가 random-like token으로 바뀌며 naive 검색 연결이 약화됨'],
+          advanced: ['YES', 0.944, '앱 설치 + 인증번호 요구 + 대표번호 확인 회피를 구조적 위험 신호로 포착']
+        },
+        summary: { title: 'Voicephishing Detected: YES', body: 'Advanced RAG는 개인정보 단서 대신 앱/링크 설치, 인증번호 요구, 정상 절차 우회, 긴급성 압박을 근거로 탐지합니다.' }
+      },
+      bank: {
+        callerName: '은행 보안상담팀',
+        callerMeta: 'Known bank context · hard negative simulation',
+        finalState: 'Normal Bank Call',
+        finalClass: 'safe',
+        messages: [
+          { speaker: '상담원', role: 'agent', text: '안녕하세요. 고객님 계정에 비정상 접속 시도가 있어 보호성 제한 상태를 안내드립니다.', chips: [], state: 'Monitoring', scores: [46, 35, 32] },
+          { speaker: '고객', role: 'customer', text: '제가 뭘 하면 되나요? 인증번호를 말씀드리면 되나요?', chips: [], state: 'Monitoring', scores: [54, 42, 38] },
+          { speaker: '상담원', role: 'agent', text: '아닙니다. 인증번호는 절대 말씀해 주실 필요가 없습니다.', chips: ['noCode'], state: 'Monitoring', scores: [55, 44, 30] },
+          { speaker: '상담원', role: 'agent', text: '공식 앱의 알림센터에서 상태를 직접 확인해 주세요.', chips: ['officialApp'], state: 'Low risk', scores: [50, 41, 24] },
+          { speaker: '상담원', role: 'agent', text: '불편하시면 대표번호로 다시 걸어 부서 확인 후 안내받으셔도 됩니다.', chips: ['repNumber'], state: 'Low risk', scores: [45, 38, 20] },
+          { speaker: '상담원', role: 'agent', text: '필요하면 가까운 영업점 방문으로 전환하셔도 됩니다.', chips: ['branch'], state: 'Normal Bank Call', scores: [31, 26, 12] }
+        ],
+        chips: [
+          ['officialApp', '공식 앱 직접 확인', 'safe'],
+          ['noCode', '인증번호 공유 금지', 'safe'],
+          ['repNumber', '대표번호 재연락 가능', 'safe'],
+          ['branch', '영업점 방문 안내', 'safe'],
+          ['guard', '정상상담 guard', 'safe']
+        ],
+        final: {
+          original: ['NO', 0.888, '정상 금융상담 흐름으로 최종 no 판단'],
+          masked: ['NO', 0.820, '일부 금융 용어는 겹치지만 사기 행동 근거가 부족함'],
+          advanced: ['NO', 0.962, '공식 앱 확인, 인증번호 공유 금지, 대표번호 재연락을 정상 guard로 반영']
+        },
+        summary: { title: 'Voicephishing Detected: NO', body: '정상 금융상담은 보안 표현을 포함하지만, 인증번호 공유를 금지하고 공식 앱/대표번호/영업점 같은 안전 절차를 안내합니다.' }
+      }
+    };
+
+    let currentKey = 'phishing';
+    let activeTimer = null;
+    let elapsedTimer = null;
+    let elapsed = 0;
+    let index = 0;
+    const activeChips = new Set();
+
+    function $(id) { return document.getElementById(id); }
+
+    function selectScenario(key) {
+      currentKey = key;
+      $('tabPhish').classList.toggle('active', key === 'phishing');
+      $('tabBank').classList.toggle('active', key === 'bank');
+      resetSimulation();
+    }
+
+    function resetSimulation() {
+      clearInterval(activeTimer);
+      clearInterval(elapsedTimer);
+      activeTimer = null;
+      elapsedTimer = null;
+      elapsed = 0;
+      index = 0;
+      activeChips.clear();
+      const scenario = scenarios[currentKey];
+      $('callerName').textContent = scenario.callerName;
+      $('callerMeta').textContent = scenario.callerMeta;
+      $('timer').textContent = '00:00';
+      $('messages').innerHTML = '';
+      renderChips();
+      setStatus('Monitoring', 'monitor');
+      setCard('original', 'WAIT', '--', 0, '개인정보가 유지된 corpus 기준');
+      setCard('masked', 'WAIT', '--', 0, '마스킹 후 검색 연결 단서 약화');
+      setCard('advanced', 'WAIT', '--', 0, '구조적 패턴과 정상상담 guard 활용');
+      setSummary('Demo ready.', 'Start 버튼을 누르면 transcript가 한 줄씩 나타나고, 탐지 패널이 단계적으로 업데이트됩니다.');
+    }
+
+    function renderChips() {
+      const scenario = scenarios[currentKey];
+      const container = $('chips');
+      container.replaceChildren();
+      scenario.chips.forEach(([id, label, type]) => {
+        const chip = document.createElement('span');
+        chip.className = `chip ${activeChips.has(id) ? 'active ' + type : ''}`;
+        chip.id = `chip-${id}`;
+        chip.textContent = label;
+        container.appendChild(chip);
+      });
+    }
+
+    function startSimulation() {
+      resetSimulation();
+      tick();
+      elapsedTimer = setInterval(() => {
+        elapsed += 1;
+        const mm = String(Math.floor(elapsed / 60)).padStart(2, '0');
+        const ss = String(elapsed % 60).padStart(2, '0');
+        $('timer').textContent = `${mm}:${ss}`;
+      }, 1000);
+      activeTimer = setInterval(tick, 1650);
+    }
+
+    function tick() {
+      const scenario = scenarios[currentKey];
+      if (index >= scenario.messages.length) {
+        clearInterval(activeTimer);
+        clearInterval(elapsedTimer);
+        finishScenario();
+        return;
+      }
+      const item = scenario.messages[index++];
+      const msg = document.createElement('div');
+      msg.className = `msg ${item.role}`;
+      const speaker = document.createElement('b');
+      speaker.textContent = item.speaker;
+      const lineBreak = document.createElement('br');
+      const text = document.createTextNode(item.text);
+      msg.append(speaker, lineBreak, text);
+      $('messages').appendChild(msg);
+      item.chips.forEach((chip) => activeChips.add(chip));
+      if (currentKey === 'bank' && item.chips.length) activeChips.add('guard');
+      renderChips();
+      const cls = item.state.includes('Detected') ? 'detected' : item.state.includes('Normal') || item.state.includes('Low') ? 'safe' : item.state.includes('Suspicious') ? 'suspicious' : 'monitor';
+      setStatus(item.state, cls);
+      updateProgressCards(item.scores);
+      if (index >= scenario.messages.length) {
+        clearInterval(activeTimer);
+        clearInterval(elapsedTimer);
+        finishScenario();
+      }
+    }
+
+    function finishScenario() {
+      const scenario = scenarios[currentKey];
+      setStatus(scenario.finalState, scenario.finalClass);
+      setFinalCard('original', scenario.final.original);
+      setFinalCard('masked', scenario.final.masked);
+      setFinalCard('advanced', scenario.final.advanced);
+      setSummary(scenario.summary.title, scenario.summary.body);
+    }
+
+    function setSummary(title, body) {
+      const summary = $('summary');
+      summary.replaceChildren();
+      const heading = document.createElement('b');
+      heading.textContent = title;
+      const paragraph = document.createElement('p');
+      paragraph.textContent = body;
+      summary.append(heading, paragraph);
+    }
+
+    function setStatus(text, cls) {
+      const box = $('statusBox');
+      box.className = `status ${cls}`;
+      $('statusText').textContent = text;
+    }
+
+    function updateProgressCards(scores) {
+      const [original, masked, advanced] = scores;
+      const scenario = scenarios[currentKey];
+      setCard('original', progressLabel(original, scenario), original.toFixed(1), original, 'retrieval evidence accumulating');
+      setCard('masked', progressLabel(masked, scenario, true), masked.toFixed(1), masked, 'masked identifiers weaken naive evidence');
+      setCard('advanced', progressLabel(advanced, scenario), advanced.toFixed(1), advanced, 'pattern/guard signals updating');
+    }
+
+    function progressLabel(score, scenario, masked = false) {
+      if (scenario === scenarios.bank) return score < 35 ? 'NO' : 'WATCH';
+      if (masked) return score > 65 ? 'YES' : 'UNCERTAIN';
+      if (score > 80) return 'YES';
+      if (score > 58) return 'WATCH';
+      return 'WAIT';
+    }
+
+    function setFinalCard(prefix, tuple) {
+      const [label, score, evidence] = tuple;
+      setCard(prefix, label, score.toFixed(3), Math.round(score * 100), evidence);
+    }
+
+    function setCard(prefix, label, score, width, evidence) {
+      const result = $(`${prefix}Result`);
+      result.textContent = label;
+      result.className = 'result ' + (label === 'YES' ? 'yes' : label === 'NO' ? 'no' : 'uncertain');
+      $(`${prefix}Score`).textContent = `score: ${score}`;
+      $(`${prefix}Bar`).style.width = `${Math.max(0, Math.min(100, width))}%`;
+      $(`${prefix}Evidence`).textContent = evidence;
+    }
+
+    resetSimulation();
+  </script>
+</body>
+</html>
