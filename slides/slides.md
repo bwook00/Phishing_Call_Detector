@@ -141,7 +141,7 @@ RAG 기반 보이스피싱 탐지 성능을 유지할 수 있을까?
 </div>
 
 <div class="mt-6 callout-red">
-Naive RAG는 이름, 기관명, 계좌, 주소처럼 query와 corpus를 직접 이어주던 <b>retrieval anchor</b>를 잃는다.
+Naive RAG는 이름, 기관명, 계좌, 주소처럼 query와 corpus를 이어주던 <b>검색 연결 단서</b>를 잃는다.
 </div>
 
 ---
@@ -236,7 +236,7 @@ Irrelevant sample은 너무 쉽게 no로 분류되는 경우가 많아 최종 �
     <div class="pipe-flow">
       <div class="pipe-node">Original corpus<br/><small>개인정보 유지</small></div>
       <div class="pipe-arrow">→</div>
-      <div class="pipe-node">BM25 Retriever<br/><small>표면 anchor 매칭</small></div>
+      <div class="pipe-node">BM25 Retriever<br/><small>표면 단서 매칭</small></div>
       <div class="pipe-arrow">→</div>
       <div class="pipe-node">Score / LLM<br/><small>yes · no</small></div>
     </div>
@@ -249,7 +249,7 @@ Irrelevant sample은 너무 쉽게 no로 분류되는 경우가 많아 최종 �
     <div class="pipe-flow">
       <div class="pipe-node">Masked corpus<br/><small>이름·기관명 제거</small></div>
       <div class="pipe-arrow">→</div>
-      <div class="pipe-node weak">BM25 Retriever<br/><small>anchor 약화</small></div>
+      <div class="pipe-node weak">BM25 Retriever<br/><small>검색 단서 약화</small></div>
       <div class="pipe-arrow">→</div>
       <div class="pipe-node weak">Lower evidence<br/><small>성능 하락 예상</small></div>
     </div>
@@ -351,7 +351,7 @@ Irrelevant sample은 너무 쉽게 no로 분류되는 경우가 많아 최종 �
 <div class="card muted compact-list">
 <div class="eyebrow">Masked Naive RAG</div>
 <ul>
-<li>이름·기관명·계좌번호 anchor 약화</li>
+<li>이름·기관명·계좌번호 검색 단서 약화</li>
 <li>query-context 연결 근거 부족</li>
 <li>단순 score 기준에서 positive recall 하락</li>
 </ul>
@@ -391,7 +391,7 @@ LLM 없이 retrieval score와 threshold만으로 평가했다.
 </div>
 
 <div class="mt-5 callout-red">
-마스킹 후 Naive RAG는 retrieval anchor 손실로 크게 하락했고, Advanced RAG는 구조적 패턴 기반으로 회복했다.
+마스킹 후 Naive RAG는 검색 연결 단서 손실로 크게 하락했고, Advanced RAG는 구조적 패턴 기반으로 회복했다.
 </div>
 
 ---
@@ -447,7 +447,7 @@ LLM 최종 판단까지 포함해도 동일한 경향이 나타났다: <b>Masked
 <div class="grid grid-cols-2 gap-5 mt-8">
   <div class="conclusion-card">
     <div class="num">1</div>
-    개인정보 마스킹은 RAG의 retrieval anchor를 약화시켜 성능 저하를 만들었다.
+    개인정보 마스킹은 RAG의 검색 연결 단서를 약화시켜 성능 저하를 만들었다.
   </div>
   <div class="conclusion-card">
     <div class="num">2</div>
