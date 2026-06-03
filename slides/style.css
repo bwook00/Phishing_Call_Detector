@@ -278,3 +278,16 @@ code { font-size: 0.92em; }
   color: #1e3a8a;
   box-shadow: 0 18px 44px rgba(15,23,42,0.08);
 }
+
+.mask-step {
+  background: white;
+  border: 1px solid rgba(148,163,184,0.28);
+  border-radius: 16px;
+  padding: 14px 16px;
+  box-shadow: 0 10px 24px rgba(15,23,42,0.06);
+}
+.mask-step b { display:block; color:#1d4ed8; margin-bottom:5px; font-size:1.02rem; }
+.mask-step span { color:#475569; font-weight:750; font-size:0.92rem; line-height:1.35; }
+.mask-step.strong { border-color: rgba(220,38,38,0.28); background:#fff7f7; }
+.mask-step.strong b { color:#991b1b; }
+.mask-arrow { display:flex; align-items:center; justify-content:center; color:#2563eb; font-weight:900; font-size:2rem; }

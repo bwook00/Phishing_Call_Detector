@@ -115,33 +115,41 @@ RAG 기반 보이스피싱 탐지 성능을 유지할 수 있을까?
 
 # 왜 마스킹이 문제가 되는가?
 
-<div class="grid grid-cols-2 gap-6 mt-6">
+<div class="grid grid-cols-2 gap-6 mt-5">
 <div class="card">
-<div class="eyebrow">Original transcript</div>
+<div class="eyebrow">Original corpus</div>
 
 ```text
-김하늘 씨 맞으신가요?
-국민은행과 카카오뱅크에 보안 점검 이력이 있습니다.
-문자로 전용 페이지를 보내드릴 테니
-보호 모듈을 설치해 주세요.
+서울중앙지방검찰청 형사3부 수사관입니다.
+박서연 씨 명의 신한은행 계좌가
+전기통신금융사기 사건에 연루됐습니다.
+사건번호는 2026형제18000입니다.
+현재 주소는 서울 강서구로 조회됩니다.
 ```
 
 </div>
 <div class="card muted">
-<div class="eyebrow">Masked transcript</div>
+<div class="eyebrow">Masked corpus used in final experiment</div>
 
 ```text
-[이름] 씨 맞으신가요?
-[기관명]과 [기관명]에 보안 점검 이력이 있습니다.
-문자로 전용 페이지를 보내드릴 테니
-보호 모듈을 설치해 주세요.
+uiuiufawaefiiifji 형사3부 수사관입니다.
+qmqmzkkvvopaa 씨 명의 bbbqrrtuuplkz 계좌가
+전기통신금융사기 사건에 연루됐습니다.
+사건번호는 xxyyqqppmmrrt입니다.
+현재 주소는 aaeiioouuzzxx로 조회됩니다.
 ```
 
 </div>
 </div>
 
-<div class="mt-6 callout-red">
-Naive RAG는 이름, 기관명, 계좌, 주소처럼 query와 corpus를 이어주던 <b>검색 연결 단서</b>를 잃는다.
+<div class="mt-5 grid grid-cols-3 gap-4">
+  <div class="mask-step"><b>1. Regex masking</b><span>이름·은행명·주소 등을 placeholder로 치환</span></div>
+  <div class="mask-arrow">→</div>
+  <div class="mask-step strong"><b>2. Strong masking</b><span>[이름] 같은 의미 있는 토큰도 random-like string으로 치환</span></div>
+</div>
+
+<div class="mt-5 callout-red">
+최종 실험에서는 <b>[이름]</b> 같은 친절한 placeholder가 아니라, 의미 없는 고정 토큰으로 바꿔 검색 연결 단서를 더 강하게 제거했다.
 </div>
 
 ---
