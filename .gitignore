@@ -26,3 +26,11 @@ data/final_*.csv
 data/full3000_*.csv
 data/e2e335_*_now.json
 data/e2e335_*_now.jsonl
+
+# Slidev local artifacts
+node_modules/
+slides/node_modules/
+slides/.slidev/
+slides/dist/
+slides/*.pdf
+slides/exported-slides/
