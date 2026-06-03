@@ -206,6 +206,44 @@
       box-shadow: 0 0 16px var(--green);
     }
 
+    .mask-layer {
+      margin-bottom: 12px;
+      padding: 12px;
+      border-radius: 18px;
+      background: rgba(15, 23, 42, 0.72);
+      border: 1px solid rgba(96, 165, 250, 0.22);
+    }
+    .mask-layer-head {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      align-items: center;
+      margin-bottom: 8px;
+      color: #dbeafe;
+      font-size: 12px;
+      font-weight: 850;
+    }
+    .mask-layer-head span:last-child {
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 600;
+    }
+    .mask-line {
+      display: grid;
+      grid-template-columns: 62px 1fr;
+      gap: 8px;
+      align-items: start;
+      padding: 7px 0;
+      border-top: 1px solid rgba(148, 163, 184, 0.12);
+      font-size: 12px;
+      line-height: 1.45;
+    }
+    .mask-line:first-of-type { border-top: 0; }
+    .mask-label { color: var(--muted); font-weight: 800; }
+    .mask-text { color: #cbd5e1; }
+    .mask-text.masked { color: #bfdbfe; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+    .mask-token { color: #93c5fd; font-weight: 900; }
+
     .message-list { display: flex; flex-direction: column; gap: 10px; }
     .msg {
       opacity: 0;
@@ -422,6 +460,14 @@
             <span class="pill"><span class="dot"></span> Transcript chunks</span>
             <span class="pill">STT output assumed · RAG scope only</span>
           </div>
+          <div class="mask-layer">
+            <div class="mask-layer-head">
+              <span>Privacy Masking Layer</span>
+              <span>current utterance preview</span>
+            </div>
+            <div class="mask-line"><div class="mask-label">Original</div><div class="mask-text" id="maskOriginal">통화가 시작되면 현재 발화가 표시됩니다.</div></div>
+            <div class="mask-line"><div class="mask-label">Masked</div><div class="mask-text masked" id="maskMasked">개인정보/식별 단서가 random-like token으로 치환됩니다.</div></div>
+          </div>
           <div class="message-list" id="messages"></div>
         </div>
       </section>
@@ -483,7 +529,7 @@
 
         <div class="explain">
           <h3>Scope note</h3>
-          <p>본 데모는 STT 이후 transcript가 실시간으로 들어오는 상황을 가정한 simulation입니다. 본 프로젝트의 범위는 음성 인식이 아니라, transcript 기반 RAG 탐지와 개인정보 마스킹 환경의 성능 비교입니다.</p>
+          <p>본 데모는 STT 이후 transcript가 실시간으로 들어오는 상황을 가정한 simulation입니다. 본 프로젝트의 범위는 음성 인식이 아니라 transcript 기반 RAG 탐지이며, 현재 발화의 masked preview는 개인정보/식별 단서가 제거된 뒤에도 사기 구조가 남는다는 점을 보여주기 위한 시각화입니다.</p>
         </div>
       </section>
     </div>
@@ -597,6 +643,8 @@
       $('callerMeta').textContent = scenario.callerMeta;
       $('timer').textContent = '00:00';
       $('messages').innerHTML = '';
+      $('maskOriginal').textContent = '통화가 시작되면 현재 발화가 표시됩니다.';
+      $('maskMasked').textContent = '개인정보/식별 단서가 random-like token으로 치환됩니다.';
       renderChips();
       setStatus('Monitoring', 'monitor');
       setCard('original', 'WAIT', '--', 0, '개인정보가 유지된 corpus 기준');
@@ -616,6 +664,22 @@
         chip.textContent = label;
         container.appendChild(chip);
       });
+    }
+
+    function maskUtterance(text) {
+      return text
+        .replaceAll('김하늘', 'qmqmzkkvvopaa')
+        .replaceAll('국민은행', 'bbbqrrtuuplkz')
+        .replaceAll('카카오뱅크', 'cccwwxxyyqaz')
+        .replaceAll('금융보호지원센터', 'uiuiufawaefiiifji')
+        .replaceAll('보안상담팀', 'llmmnnooppqq')
+        .replaceAll('대표번호', 'rrssttuuvvxx')
+        .replaceAll('영업점', 'zzxxccvvbbnn');
+    }
+
+    function updateMaskLayer(text) {
+      $('maskOriginal').textContent = text;
+      $('maskMasked').textContent = maskUtterance(text);
     }
 
     function startSimulation() {
@@ -639,6 +703,7 @@
         return;
       }
       const item = scenario.messages[index++];
+      updateMaskLayer(item.text);
       const msg = document.createElement('div');
       msg.className = `msg ${item.role}`;
       const speaker = document.createElement('b');
