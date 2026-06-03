@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "dev": "slidev --host 0.0.0.0",
+    "dev": "slidev --remote 0.0.0.0 --bind 0.0.0.0",
     "build": "slidev build --out dist",
     "export:pdf": "slidev export --format pdf --output voicephishing-rag-final-slides.pdf"
   },

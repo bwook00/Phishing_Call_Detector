@@ -43,35 +43,49 @@ RAG 기반 보이스피싱 탐지 성능을 유지할 수 있을까?
 
 # 연구 범위
 
-<div class="grid grid-cols-[1.1fr_0.9fr] gap-8 mt-6 items-center">
-<div>
-
-```mermaid
-flowchart LR
-  A[통화 음성] --> B[STT]
-  B --> C[통화 transcript]
-  C --> D[RAG 기반 보이스피싱 탐지]
-  D --> E[yes / no]
-
-  style B fill:#f1f5f9,stroke:#94a3b8,color:#64748b
-  style D fill:#dbeafe,stroke:#2563eb,color:#0f172a
-```
-
+<div class="mt-6 scope-flow">
+  <div class="scope-step muted">
+    <div class="scope-icon">☎</div>
+    <b>통화 음성</b>
+    <span>raw call audio</span>
+  </div>
+  <div class="scope-arrow">→</div>
+  <div class="scope-step muted dashed">
+    <div class="scope-icon">STT</div>
+    <b>음성 인식</b>
+    <span>assumed</span>
+  </div>
+  <div class="scope-arrow">→</div>
+  <div class="scope-step">
+    <div class="scope-icon">TXT</div>
+    <b>통화 transcript</b>
+    <span>project input</span>
+  </div>
+  <div class="scope-arrow">→</div>
+  <div class="scope-step active">
+    <div class="scope-icon">RAG</div>
+    <b>보이스피싱 탐지</b>
+    <span>yes / no</span>
+  </div>
 </div>
-<div class="space-y-4">
+
+<div class="grid grid-cols-3 gap-4 mt-7">
   <div class="card accent-blue">
     <div class="eyebrow">Scope</div>
-    STT 이후 생성된 <b>통화 transcript</b>를 입력으로 가정
+    STT 이후 생성된 <b>통화 transcript</b>를 입력으로 사용
   </div>
-  <div class="card">
-    <div class="eyebrow">Not in scope</div>
-    STT 모델 자체의 성능 평가는 제외
+  <div class="card muted">
+    <div class="eyebrow">Excluded</div>
+    STT 모델 자체의 성능 평가는 실험 범위에서 제외
   </div>
   <div class="card">
     <div class="eyebrow">Focus</div>
-    개인정보 마스킹 환경에서 RAG 탐지 성능 변화 분석
+    개인정보 마스킹이 RAG 탐지 성능에 미치는 영향 분석
   </div>
 </div>
+
+<div class="mt-5 callout-blue compact-callout">
+음성 처리 시스템이 아니라, <b>마스킹된 transcript 환경에서의 RAG 탐지 문제</b>에 집중했다.
 </div>
 
 ---
@@ -191,92 +205,105 @@ Irrelevant sample은 너무 쉽게 no로 분류되는 경우가 많아 최종 �
 
 # 비교한 세 가지 Pipeline
 
-<div class="grid grid-cols-3 gap-5 mt-8">
-  <div class="pipeline-card">
-    <div class="eyebrow">Pipeline 1</div>
-    <h3>Original<br/>Naive RAG</h3>
-    <p>원본 corpus 기반 BM25 retrieval</p>
+<div class="pipeline-compare mt-4">
+  <div class="pipe-row original">
+    <div class="pipe-title">
+      <span>1</span> Original Naive RAG
+    </div>
+    <div class="pipe-flow">
+      <div class="pipe-node">Original corpus<br/><small>개인정보 유지</small></div>
+      <div class="pipe-arrow">→</div>
+      <div class="pipe-node">BM25 Retriever<br/><small>표면 anchor 매칭</small></div>
+      <div class="pipe-arrow">→</div>
+      <div class="pipe-node">Score / LLM<br/><small>yes · no</small></div>
+    </div>
   </div>
-  <div class="pipeline-card muted">
-    <div class="eyebrow">Pipeline 2</div>
-    <h3>Masked<br/>Naive RAG</h3>
-    <p>개인정보 마스킹 corpus 기반 BM25 retrieval</p>
+
+  <div class="pipe-row masked">
+    <div class="pipe-title">
+      <span>2</span> Masked Naive RAG
+    </div>
+    <div class="pipe-flow">
+      <div class="pipe-node">Masked corpus<br/><small>이름·기관명 제거</small></div>
+      <div class="pipe-arrow">→</div>
+      <div class="pipe-node weak">BM25 Retriever<br/><small>anchor 약화</small></div>
+      <div class="pipe-arrow">→</div>
+      <div class="pipe-node weak">Lower evidence<br/><small>성능 하락 예상</small></div>
+    </div>
   </div>
-  <div class="pipeline-card accent">
-    <div class="eyebrow">Pipeline 3</div>
-    <h3>Masked<br/>Advanced RAG</h3>
-    <p>구조적 보이스피싱 패턴 + 정상 금융상담 guard</p>
+
+  <div class="pipe-row advanced">
+    <div class="pipe-title">
+      <span>3</span> Masked Advanced RAG
+    </div>
+    <div class="pipe-flow">
+      <div class="pipe-node">Masked corpus<br/><small>개인정보 없음</small></div>
+      <div class="pipe-arrow">→</div>
+      <div class="pipe-node strong">Pattern Rerank<br/><small>사기 흐름·행동 신호</small></div>
+      <div class="pipe-arrow">→</div>
+      <div class="pipe-node strong">Guarded Decision<br/><small>정상 금융상담 구분</small></div>
+    </div>
   </div>
 </div>
 
-<div class="mt-8 text-center text-xl font-semibold text-blue-700">
-목표: Masked Naive의 성능 저하를 확인하고, Advanced RAG로 회복 가능한지 검증
+<div class="mt-4 text-center text-lg font-semibold text-blue-700">
+같은 benchmark에서 <b>Original → Masked 하락</b>과 <b>Advanced 회복</b>을 비교
 </div>
 
 ---
 
 # Two Evaluation Tracks
 
-<div class="grid grid-cols-2 gap-6 mt-6">
-<div class="track-card">
-<div class="eyebrow">Track A · Lightweight detection</div>
+<div class="eval-grid mt-6">
+  <div class="eval-card light">
+    <div class="eyebrow">Track A · Retrieval-only</div>
+    <div class="eval-flow">
+      <div>Transcript</div><span>↓</span>
+      <div>Retriever</div><span>↓</span>
+      <div>Similarity / BM25 score</div><span>↓</span>
+      <div>Threshold</div><span>↓</span>
+      <div class="decision">yes / no</div>
+    </div>
+    <div class="eval-note">LLM 없이 빠른 1차 탐지 가능성 확인</div>
+  </div>
 
-```mermaid
-flowchart TB
-  A[Transcript] --> B[Retriever]
-  B --> C[Similarity / BM25 score]
-  C --> D[Threshold]
-  D --> E[yes / no]
-```
-
-<ul>
-<li>LLM 호출 없음</li>
-<li>낮은 비용과 latency</li>
-<li>실시간 1차 탐지 가능성 확인</li>
-</ul>
-</div>
-
-<div class="track-card">
-<div class="eyebrow">Track B · End-to-end RAG</div>
-
-```mermaid
-flowchart TB
-  A[Transcript] --> B[Retriever]
-  B --> C[Evidence Filter]
-  C --> D[LLM]
-  D --> E[yes / no]
-```
-
-<ul>
-<li>RAG 전체 pipeline 기준 평가</li>
-<li>LLM 판단 포함</li>
-<li>retrieved evidence 기반 최종 응답</li>
-</ul>
-</div>
+  <div class="eval-card e2e">
+    <div class="eyebrow">Track B · End-to-End RAG</div>
+    <div class="eval-flow">
+      <div>Transcript</div><span>↓</span>
+      <div>Retriever</div><span>↓</span>
+      <div>Evidence Filter</div><span>↓</span>
+      <div>LLM</div><span>↓</span>
+      <div class="decision">yes / no</div>
+    </div>
+    <div class="eval-note">실제 RAG pipeline 기준 최종 판단 평가</div>
+  </div>
 </div>
 
 <div class="mt-5 callout-blue">
-보이스피싱 탐지는 통화 중 빠른 판단이 중요하므로, LLM 기반 방식뿐 아니라 retrieval-only 경량 탐지도 함께 평가했다.
+두 track을 분리해 <b>검색 단계의 영향</b>과 <b>LLM 포함 최종 성능</b>을 각각 확인했다.
 </div>
 
 ---
 
 # 왜 Retrieval-only도 중요한가?
 
-<div class="grid grid-cols-[0.9fr_1.1fr] gap-8 mt-6 items-center">
-<div class="space-y-4">
-  <div class="card"><b>API 비용</b><br/>매 통화마다 LLM 호출 시 비용 발생</div>
-  <div class="card"><b>Latency</b><br/>실시간 경고에는 빠른 판단이 필요</div>
-  <div class="card"><b>On-device 부담</b><br/>내장 LLM 사용 시 배터리·연산 자원 부담</div>
-  <div class="card"><b>Privacy</b><br/>통화 transcript를 외부 API로 보내는 부담</div>
+<div class="grid grid-cols-[0.95fr_1.05fr] gap-8 mt-6 items-center">
+<div class="reason-list">
+  <div class="reason-item"><b>Cost</b><span>매 통화마다 LLM API 호출 비용 발생</span></div>
+  <div class="reason-item"><b>Latency</b><span>통화 중 경고에는 즉시성 필요</span></div>
+  <div class="reason-item"><b>Battery</b><span>온디바이스 LLM은 연산·배터리 부담</span></div>
+  <div class="reason-item"><b>Privacy</b><span>transcript 외부 전송 부담</span></div>
 </div>
-<div>
+<div class="retrieval-purpose">
   <div class="big-number">LLM 없이도?</div>
-  <div class="text-2xl mt-4 font-semibold">
-    Retrieval score + threshold만으로<br/>1차 탐지가 가능한지 확인
+  <div class="purpose-grid mt-6">
+    <div><b>Input</b><span>통화 transcript</span></div>
+    <div><b>Signal</b><span>BM25 / similarity score</span></div>
+    <div><b>Rule</b><span>threshold 기반 yes/no</span></div>
   </div>
-  <div class="mt-6 text-slate-600">
-    동시에 LLM 사전지식 개입을 줄이고, 마스킹이 검색 단계에 미치는 영향을 더 직접적으로 볼 수 있다.
+  <div class="mt-6 callout-blue">
+    Retrieval-only는 <b>경량 탐지 가능성</b>과 <b>마스킹이 검색 단계에 미치는 영향</b>을 동시에 보여준다.
   </div>
 </div>
 </div>
@@ -285,28 +312,34 @@ flowchart TB
 
 # Advanced RAG: 핵심 아이디어
 
-<div class="big-quote mt-4">
-개인정보가 사라져도,<br/>사기 행위의 구조는 남아 있다.
+<div class="big-quote mt-2">개인정보가 사라져도, 사기 행위의 구조는 남아 있다.</div>
+
+<div class="advanced-flow mt-6">
+  <div class="adv-node muted">Masked transcript<br/><small>식별 단서 약화</small></div>
+  <div class="pipe-arrow">→</div>
+  <div class="adv-node">Pattern extraction<br/><small>사칭·압박·행동 유도</small></div>
+  <div class="pipe-arrow">→</div>
+  <div class="adv-node">Reranking / evidence<br/><small>구조적 근거 강화</small></div>
+  <div class="pipe-arrow">→</div>
+  <div class="adv-node strong">Guarded decision<br/><small>정상 금융상담과 구분</small></div>
 </div>
 
-<div class="grid grid-cols-2 gap-6 mt-8">
-<div class="card muted">
+<div class="grid grid-cols-2 gap-6 mt-7">
+<div class="card muted compact-list">
 <div class="eyebrow">Masked Naive RAG</div>
 <ul>
-<li>이름, 기관명, 계좌번호 등 anchor 약화</li>
+<li>이름·기관명·계좌번호 anchor 약화</li>
 <li>query-context 연결 근거 부족</li>
-<li>retrieval score 하락</li>
+<li>단순 score 기준에서 positive recall 하락</li>
 </ul>
 </div>
-<div class="card accent-blue">
+<div class="card accent-blue compact-list">
 <div class="eyebrow">Masked Advanced RAG</div>
-<ul>
-<li>수사기관/금융기관 사칭 흐름</li>
-<li>이상거래/명의도용 명목</li>
-<li>링크·앱 설치·인증번호 요구</li>
-<li>송금/안전계좌 유도</li>
-<li>정상 금융상담 guard</li>
-</ul>
+<div class="signal-grid">
+  <span>기관 사칭</span><span>이상거래 명목</span>
+  <span>링크·앱 설치</span><span>인증번호 요구</span>
+  <span>송금 유도</span><span>정상상담 guard</span>
+</div>
 </div>
 </div>
 
@@ -444,3 +477,14 @@ GitHub: <span class="font-mono">github.com/bwook00/Phishing_Call_Detector</span>
 <div class="mt-8 text-slate-500">
 감사합니다.
 </div>
+---
+
+# 왜 마스킹이 문제가 되는가?---
+
+# Two Evaluation Tracks---
+
+# 왜 Retrieval-only도 중요한가?---
+
+# Advanced RAG: 핵심 아이디어---
+
+# Retrieval-based Result
