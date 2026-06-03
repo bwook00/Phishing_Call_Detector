@@ -311,9 +311,6 @@ Irrelevant sample은 너무 쉽게 no로 분류되는 경우가 많아 최종 �
   </div>
 </div>
 
-<div class="mt-5 callout-blue">
-두 track을 분리해 <b>검색 단계의 영향</b>과 <b>LLM 포함 최종 성능</b>을 각각 확인했다.
-</div>
 
 ---
 
@@ -508,14 +505,3 @@ GitHub: <span class="font-mono">github.com/bwook00/Phishing_Call_Detector</span>
 <div class="mt-8 text-slate-500">
 감사합니다.
 </div>
----
-
-# 왜 마스킹이 문제가 되는가?---
-
-# Two Evaluation Tracks---
-
-# 왜 Retrieval-only도 중요한가?---
-
-# Advanced RAG: 핵심 아이디어---
-
-# Retrieval-based Result
