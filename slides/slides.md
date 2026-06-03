@@ -23,6 +23,29 @@ Voicephishing Detection · Privacy Masking · Retrieval-Augmented Generation
 </div>
 
 ---
+
+# Motivation
+
+<div class="grid grid-cols-[0.95fr_1.05fr] gap-8 mt-8 items-center">
+<div class="card accent-blue hack-card">
+  <div class="eyebrow">Previous Prototype</div>
+  <h2>Voice Phishing<br/>MCP Server</h2>
+  <p>Claude Code Hackathon에서 보이스피싱 탐지 MCP server prototype을 만들었다.</p>
+</div>
+<div>
+  <div class="big-quote">
+  작동하는 탐지 시스템을 만든 뒤,<br/>하나의 현실적인 질문이 남았다.
+  </div>
+  <div class="question-card mt-8">
+    “민감한 통화 transcript를 다룰 때,<br/>그래도 개인정보 마스킹을 적용해야 할까?”
+  </div>
+  <div class="mt-6 text-slate-600 text-xl leading-relaxed">
+  이 프로젝트는 그 질문에서 출발해, 마스킹이 RAG 기반 보이스피싱 탐지 성능에 미치는 영향을 실험적으로 확인했다.
+  </div>
+</div>
+</div>
+
+---
 layout: center
 ---
 

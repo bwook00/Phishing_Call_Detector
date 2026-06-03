@@ -254,3 +254,27 @@ code { font-size: 0.92em; }
 .pipe-flow { gap: 7px; }
 .pipe-node { padding: 9px 9px; font-size: 0.92rem; }
 .pipe-node small { font-size: 0.78rem; }
+
+.hack-card h2 {
+  font-size: 2.25rem;
+  line-height: 1.05;
+  letter-spacing: -0.04em;
+  margin: 10px 0 18px;
+}
+.hack-card p {
+  color: #475569;
+  font-size: 1.1rem;
+  font-weight: 700;
+  line-height: 1.55;
+}
+.question-card {
+  background: linear-gradient(135deg, #eff6ff, #ffffff);
+  border: 2px solid rgba(37,99,235,0.32);
+  border-radius: 22px;
+  padding: 24px 28px;
+  font-size: 1.55rem;
+  line-height: 1.35;
+  font-weight: 900;
+  color: #1e3a8a;
+  box-shadow: 0 18px 44px rgba(15,23,42,0.08);
+}
